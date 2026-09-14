@@ -1,0 +1,247 @@
+import * as vscode from 'vscode';
+
+import {
+  directionOf,
+  formatChangePercent,
+  formatPrice,
+  statusBarText,
+  tooltipMarkdown,
+  type TooltipRow,
+} from './format';
+import type { Instrument, Quote, QuoteProvider } from './providers/types';
+import { backoffSeconds, QuoteService } from './quoteService';
+import { parseWatchlist } from './symbols';
+
+const SETTINGS = 'codingview';
+
+export class StatusBarController implements vscode.Disposable {
+  private readonly item: vscode.StatusBarItem;
+  private readonly disposables: vscode.Disposable[] = [];
+  private readonly quotes = new Map<string, Quote>();
+  private instruments: Instrument[] = [];
+  private index = 0;
+  private stale = false;
+  private lastError?: string;
+  private failures = 0;
+  private refreshing = false;
+  private refreshTimer?: ReturnType<typeof setTimeout>;
+  private rotateTimer?: ReturnType<typeof setInterval>;
+
+  constructor(
+    private readonly providers: QuoteProvider[],
+    private readonly output: vscode.OutputChannel,
+  ) {
+    this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    this.item.name = 'CodingView';
+    this.item.command = 'codingview.showList';
+  }
+
+  start(): void {
+    this.disposables.push(
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration(SETTINGS)) {
+          this.output.appendLine('Configuration changed, reloading the watchlist.');
+          this.reload();
+        }
+      }),
+    );
+    this.item.show();
+    this.reload();
+  }
+
+  dispose(): void {
+    this.clearTimers();
+    this.item.dispose();
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+  }
+
+  /** Advances the rotation, used by the `codingview.nextSymbol` command. */
+  next(): void {
+    if (this.instruments.length < 2) {
+      return;
+    }
+    this.index = (this.index + 1) % this.instruments.length;
+    this.render();
+  }
+
+  /** Rotates to a specific instrument, used when the user picks a row from the list. */
+  focus(id: string): void {
+    const position = this.instruments.findIndex((instrument) => instrument.id === id);
+    if (position >= 0) {
+      this.index = position;
+      this.render();
+    }
+  }
+
+  quoteFor(id: string): Quote | undefined {
+    return this.quotes.get(id);
+  }
+
+  refreshNow(): void {
+    this.scheduleRefresh(0);
+  }
+
+  private settings(): vscode.WorkspaceConfiguration {
+    return vscode.workspace.getConfiguration(SETTINGS);
+  }
+
+  private readSeconds(key: string, fallback: number, minimum: number): number {
+    const value = this.settings().get<number>(key, fallback);
+    return Number.isFinite(value) ? Math.max(minimum, value) : fallback;
+  }
+
+  private clearTimers(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = undefined;
+    }
+    if (this.rotateTimer) {
+      clearInterval(this.rotateTimer);
+      this.rotateTimer = undefined;
+    }
+  }
+
+  private reload(): void {
+    const { instruments, invalid } = parseWatchlist(this.settings().get<string[]>('watchlist', []));
+    this.instruments = instruments;
+    if (this.index >= instruments.length) {
+      this.index = 0;
+    }
+    for (const id of [...this.quotes.keys()]) {
+      if (!instruments.some((instrument) => instrument.id === id)) {
+        this.quotes.delete(id);
+      }
+    }
+    if (invalid.length > 0) {
+      this.output.appendLine(
+        `Ignoring invalid entries: ${invalid.map((entry) => `${entry.entry} (${entry.reason})`).join('; ')}`,
+      );
+    }
+
+    this.clearTimers();
+    this.rotateTimer = setInterval(() => this.next(), this.readSeconds('rotateIntervalSeconds', 5, 2) * 1000);
+    this.render();
+    this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : 0);
+  }
+
+  private scheduleRefresh(delayMs: number): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+    this.refreshTimer = setTimeout(() => {
+      void this.refresh();
+    }, delayMs);
+  }
+
+  private async refresh(): Promise<void> {
+    if (this.refreshing) {
+      return;
+    }
+
+    const refreshMs = this.readSeconds('refreshIntervalSeconds', 60, 15) * 1000;
+    if (this.instruments.length === 0) {
+      this.scheduleRefresh(refreshMs);
+      return;
+    }
+
+    this.refreshing = true;
+    try {
+      const service = new QuoteService({
+        providers: this.providers,
+        providerMode: this.settings().get<string>('provider', 'auto'),
+      });
+      const outcome = await service.refresh(this.instruments);
+
+      for (const quote of outcome.quotes) {
+        this.quotes.set(quote.id, quote);
+      }
+
+      if (outcome.providerErrors.length > 0 || outcome.missing.length > 0) {
+        this.failures += 1;
+        this.stale = true;
+        this.lastError = outcome.providerErrors[0];
+      } else {
+        this.failures = 0;
+        this.stale = false;
+        this.lastError = undefined;
+      }
+
+      if (outcome.providerErrors.length > 0) {
+        this.output.appendLine(`Refresh failed: ${outcome.providerErrors.join('; ')}`);
+      }
+      if (outcome.missing.length > 0) {
+        this.output.appendLine(`No data for: ${outcome.missing.join(', ')}`);
+      }
+    } catch (error) {
+      this.failures += 1;
+      this.stale = true;
+      this.lastError = error instanceof Error ? error.message : String(error);
+      this.output.appendLine(`Unexpected refresh error: ${this.lastError}`);
+    } finally {
+      this.refreshing = false;
+    }
+
+    this.render();
+    this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : refreshMs);
+  }
+
+  private render(): void {
+    if (this.instruments.length === 0) {
+      this.item.text = `$(graph) ${vscode.l10n.t('Add a symbol')}`;
+      this.item.tooltip = vscode.l10n.t('Click to manage the watchlist');
+      this.item.command = 'codingview.addSymbol';
+      this.item.color = undefined;
+      return;
+    }
+
+    const instrument = this.instruments[Math.min(this.index, this.instruments.length - 1)];
+    const quote = this.quotes.get(instrument.id);
+    this.item.command = 'codingview.showList';
+    this.item.text = statusBarText({ instrument, quote, stale: this.stale });
+    this.item.color = this.colorFor(quote);
+    this.item.tooltip = this.tooltip();
+  }
+
+  private colorFor(quote: Quote | undefined): vscode.ThemeColor | undefined {
+    if (!quote || !this.settings().get<boolean>('colorByDirection', true)) {
+      return undefined;
+    }
+    const direction = directionOf(quote);
+    if (direction === 'up') {
+      return new vscode.ThemeColor('charts.green');
+    }
+    return direction === 'down' ? new vscode.ThemeColor('charts.red') : undefined;
+  }
+
+  private tooltip(): vscode.MarkdownString {
+    const rows: TooltipRow[] = this.instruments.map((instrument) => {
+      const quote = this.quotes.get(instrument.id);
+      return {
+        id: instrument.id,
+        name: quote?.name ?? '',
+        price: quote ? formatPrice(quote.price, instrument.market) : '--',
+        change: formatChangePercent(quote?.changePercent),
+      };
+    });
+    const updatedAt = [...this.quotes.values()]
+      .map((quote) => quote.asOf)
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1);
+
+    const markdown = tooltipMarkdown({
+      rows,
+      updatedAt,
+      stale: this.stale,
+      error: this.lastError,
+      labels: {
+        updated: (time) => vscode.l10n.t('Updated {0}', time),
+        stale: vscode.l10n.t('Quotes are stale'),
+        lastError: (message) => vscode.l10n.t('Last error: {0}', message),
+      },
+    });
+    return new vscode.MarkdownString(markdown);
+  }
+}

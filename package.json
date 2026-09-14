@@ -1,0 +1,129 @@
+{
+  "name": "codingview",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
+  "version": "0.1.0",
+  "publisher": "your-publisher-id",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "stock",
+    "stocks",
+    "crypto",
+    "cryptocurrency",
+    "ticker",
+    "portfolio",
+    "finance",
+    "a-share",
+    "statusbar"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-account/codingview-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-account/codingview-vscode/issues"
+  },
+  "main": "./dist/extension.js",
+  "l10n": "./l10n",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "codingview.addSymbol",
+        "title": "%command.addSymbol%"
+      },
+      {
+        "command": "codingview.removeSymbol",
+        "title": "%command.removeSymbol%"
+      },
+      {
+        "command": "codingview.refreshNow",
+        "title": "%command.refreshNow%"
+      },
+      {
+        "command": "codingview.showList",
+        "title": "%command.showList%"
+      },
+      {
+        "command": "codingview.nextSymbol",
+        "title": "%command.nextSymbol%"
+      }
+    ],
+    "configuration": {
+      "title": "CodingView",
+      "properties": {
+        "codingview.watchlist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "window",
+          "markdownDescription": "%config.watchlist%"
+        },
+        "codingview.refreshIntervalSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 15,
+          "scope": "window",
+          "description": "%config.refreshIntervalSeconds%"
+        },
+        "codingview.rotateIntervalSeconds": {
+          "type": "number",
+          "default": 5,
+          "minimum": 2,
+          "scope": "window",
+          "description": "%config.rotateIntervalSeconds%"
+        },
+        "codingview.colorByDirection": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "%config.colorByDirection%"
+        },
+        "codingview.provider": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "tencent",
+            "sina",
+            "binance-vision"
+          ],
+          "default": "auto",
+          "scope": "window",
+          "description": "%config.provider%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "npm run typecheck && node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
+    "watch": "node esbuild.mjs --watch",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "@types/node": "^22.9.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.14.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.14.0",
+    "vitest": "^2.1.4"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "Add a symbol to the watchlist": "添加一个关注标的",
+  "Example: cn:600519, us:AAPL, crypto:BTCUSDT": "例如：cn:600519、us:AAPL、crypto:BTCUSDT",
+  "Invalid symbol: {0}": "标的不合法：{0}",
+  "Added {0} to the watchlist.": "已把 {0} 加入关注列表。",
+  "{0} is already in the watchlist.": "{0} 已在关注列表中。",
+  "The watchlist is empty. Add a symbol first.": "关注列表为空，请先添加标的。",
+  "Removed {0} from the watchlist.": "已从关注列表移除 {0}。",
+  "Pick a symbol to remove": "选择要移除的标的",
+  "No data": "无数据",
+  "Quotes are stale": "行情已过期",
+  "Last error: {0}": "最近错误：{0}",
+  "Updated {0}": "更新于 {0}",
+  "Click to manage the watchlist": "点击管理关注列表",
+  "Add a symbol": "添加标的",
+  "CodingView watchlist": "CodingView 关注列表",
+  "Last update failed; showing the previous prices.": "上次更新失败，显示的是之前的价格。",
+  "These symbols have no data: {0}": "以下标的没有数据：{0}"
+}
