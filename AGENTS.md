@@ -1,56 +1,50 @@
 # Repository Guidelines
 
-`codingview-vscode` is a VS Code extension that displays live stock and
-cryptocurrency prices in the bottom of the editor window, so developers can keep an
-eye on their portfolio while they code. The primary surface is a status bar item
-that refreshes periodically; symbols and refresh behavior are driven by extension
-settings. The working tree is currently a scaffold (`.agents/`, `.codex/`, and
-`.git/` only); create the directories below as code lands.
+`codingview-vscode` is a VS Code extension (engines `^1.90.0`) showing live stock and crypto
+quotes in a status bar item, driven by `codingview.*` settings and keyless Tencent, Sina and
+Binance Vision endpoints.
 
 ## Project Structure & Module Organization
 
-- `src/` — extension source in TypeScript; activation entry point `src/extension.ts`.
-- `src/test/` — unit and integration tests, mirroring the `src/` layout.
-- `media/` — icons, screenshots, and static assets referenced from `package.json`.
-- `.agents/`, `.codex/` — local agent and tooling configuration; keep these committed.
-- Root — `package.json` (contribution points and scripts), `tsconfig.json`,
-  `eslint.config.mjs`.
+- `src/extension.ts` — activation, command registration, status bar lifecycle.
+- `src/statusBar.ts`, `src/watchlist.ts` — the VS Code facing layer; the only modules importing `vscode`.
+- `src/symbols.ts`, `src/format.ts`, `src/quoteService.ts` — pure logic: symbols, formatting, batching, timeouts, backoff.
+- `src/providers/` — one provider per source, behind the `QuoteProvider` interface in `types.ts`.
+- `src/test/` — Vitest specs and real fixtures under `fixtures/`.
+- `scripts/generate-icon.mjs` regenerates `media/icon.png`; `l10n/` holds the zh-cn strings.
 
 ## Build, Test, and Development Commands
 
-- `npm install` — install dependencies.
-- `npm run compile` — type-check and build the extension with `tsc`.
-- `npm run watch` — incremental rebuild while developing.
+- `npm run compile` — `tsc --noEmit`, then esbuild bundles `src/extension.ts` into `dist/extension.js`.
+- `npm run watch` — incremental bundle; `F5` launches the Extension Development Host.
 - `npm run lint` — run ESLint across `src/`.
-- `npm test` — run the suite through `@vscode/test-electron`.
-- `F5` in VS Code — launch the Extension Development Host for manual checks.
-- `npx vsce package` — produce a `.vsix` for local installation.
+- `npm test` / `npm run test:watch` — Vitest unit suite.
+- `npm run package` — `vsce package --no-dependencies` (keep the flag: vsce's npm dependency probe returns an empty file list here).
 
 ## Coding Style & Naming Conventions
 
-Use two-space indentation, semicolons, single quotes, and a trailing newline.
-TypeScript runs in strict mode; avoid `any`. Name functions and variables in
-`camelCase`, classes and types in `PascalCase`, and files in kebab-case. Prefix
-every command ID with `codingview.` (for example `codingview.openFile`). Run
-`npm run lint` before committing.
+Two-space indentation, semicolons, single quotes, a trailing newline. TypeScript runs in strict
+mode; avoid `any`. Files, functions and variables use `camelCase`, classes and types
+`PascalCase`. Command IDs are `codingview.` plus camelCase (`codingview.addSymbol`). Keep
+testable logic out of modules that import `vscode`.
 
 ## Testing Guidelines
 
-Tests use Mocha with `@vscode/test-electron`; name files `*.test.ts` and keep them
-under `src/test/`. Cover each command handler and the activation path, including
-at least one failure case per feature. Run `npm test` locally; the suite must pass
-before merge.
+Vitest runs in the node environment over `src/test/**/*.test.ts`. Fixtures are copied from real
+responses; Tencent and Sina answer in GBK, so decode with `TextDecoder('gbk')`. Cover parsers,
+exchange derivation, batching, timeouts, failover and backoff via an injected `httpGet` rather
+than mocks. `statusBar.ts`, `watchlist.ts` and `extension.ts` are checked by `npm run compile`
+plus a manual `F5` run.
 
 ## Commit & Pull Request Guidelines
 
-No commit history exists yet, so follow Conventional Commits: `feat(editor): add
-diff view` or `fix: handle empty workspace`. Write the subject in the imperative
-mood and keep it under 72 characters. Pull requests should explain the change,
-link the related issue, list manual verification steps, and include screenshots or
-a short GIF for any UI change.
+Use Conventional Commits with a scope and an imperative subject under 72 characters, for
+example `feat(statusbar): show live quotes`. PRs should state the change and motivation, link
+the issue, list manual verification steps, and attach a screenshot or GIF for UI changes.
 
 ## Agent-Specific Instructions
 
-Never overwrite this file. Keep edits scoped to `src/` and tests, leave `.agents/`
-and `.codex/` configuration intact, and run `npm run lint && npm test` before
-reporting work as complete.
+- Update this file in place when structure, commands or conventions change; do not delete it.
+- Add new sources behind `QuoteProvider`, keyless by default, backed by fixtures.
+- Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion; say which providers you exercised.
+- Never commit `dist/`, `node_modules/` or `*.vsix`; `.gitignore` covers them.
