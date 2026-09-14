@@ -66,10 +66,20 @@ export interface TooltipRow {
   change: string;
 }
 
+export interface InvalidTooltipRow {
+  /** The raw watchlist value that failed to parse. */
+  entry: string;
+  reason: string;
+  /** Command URI that removes the raw entry from the settings. */
+  removeLink: string;
+}
+
 export interface TooltipLabels {
   updated: (time: string) => string;
   stale: string;
   lastError: (message: string) => string;
+  invalidTitle: string;
+  remove: string;
 }
 
 export interface TooltipArgs {
@@ -78,14 +88,17 @@ export interface TooltipArgs {
   stale: boolean;
   staleMessage?: string;
   error?: string;
+  invalid?: readonly InvalidTooltipRow[];
   labels?: Partial<TooltipLabels>;
 }
 
 export function tooltipMarkdown(args: TooltipArgs): string {
-  const { rows, updatedAt, stale, staleMessage, error, labels } = args;
+  const { rows, updatedAt, stale, staleMessage, error, invalid, labels } = args;
   const updated = labels?.updated ?? ((time: string) => `Last updated ${time}`);
   const staleText = labels?.stale ?? 'Quotes are stale';
   const lastError = labels?.lastError ?? ((message: string) => `Last error: ${message}`);
+  const invalidTitle = labels?.invalidTitle ?? 'Ignored entries';
+  const remove = labels?.remove ?? 'Remove';
 
   const lines = ['### CodingView', '', '| Symbol | Price | Change | Name |', '| --- | --- | --- | --- |'];
   for (const row of rows) {
@@ -94,6 +107,12 @@ export function tooltipMarkdown(args: TooltipArgs): string {
         ? `| ${row.id} | ${row.price} | ${row.change} | ${row.name} |`
         : `| ${row.id} | ${row.price} | ${row.change} |`,
     );
+  }
+  if (invalid && invalid.length > 0) {
+    lines.push('', `**${invalidTitle}**`, '', '| Entry | Problem | |', '| --- | --- | --- |');
+    for (const row of invalid) {
+      lines.push(`| ${row.entry} | ${row.reason} | [${remove}](${row.removeLink}) |`);
+    }
   }
   if (updatedAt) {
     lines.push('', updated(updatedAt));

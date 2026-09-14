@@ -80,7 +80,7 @@ test strategy, release process, decision log and roadmap.
 ## Known limitations
 
 - The watchlist is a flat symbol list; there is no holdings or profit/loss tracking.
-- Invalid symbols stay in the list and show `--` in the status bar.
+- Invalid symbols show `--` in the status bar and are listed in the tooltip with a **Remove** link.
 
 ## License
 

@@ -115,4 +115,41 @@ describe('tooltipMarkdown', () => {
     expect(markdown).toContain('Quotes are stale');
     expect(markdown).toContain('HTTP 500');
   });
+
+  test('lists ignored entries with a link that removes them', () => {
+    const markdown = tooltipMarkdown({
+      rows: [],
+      stale: false,
+      invalid: [
+        {
+          entry: 'jp:7203',
+          reason: 'Unsupported market "jp".',
+          removeLink: 'command:codingview.removeSymbolEntry?%5B%22jp%3A7203%22%5D',
+        },
+      ],
+    });
+
+    expect(markdown).toContain('Ignored entries');
+    expect(markdown).toContain(
+      '| jp:7203 | Unsupported market "jp". | [Remove](command:codingview.removeSymbolEntry?%5B%22jp%3A7203%22%5D) |',
+    );
+  });
+
+  test('translates the invalid-entry section', () => {
+    const markdown = tooltipMarkdown({
+      rows: [],
+      stale: false,
+      invalid: [{ entry: 'jp:7203', reason: 'unsupported', removeLink: 'command:x' }],
+      labels: { invalidTitle: '被忽略的标的', remove: '移除' },
+    });
+
+    expect(markdown).toContain('被忽略的标的');
+    expect(markdown).toContain('[移除](command:x)');
+  });
+
+  test('omits the invalid-entry section when every entry parses', () => {
+    const markdown = tooltipMarkdown({ rows: [], stale: false });
+
+    expect(markdown).not.toContain('Ignored entries');
+  });
 });

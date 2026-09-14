@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import {
   directionOf,
   formatChangePercent,
+  type InvalidTooltipRow,
   quotePrice,
   statusBarText,
   tooltipMarkdown,
@@ -11,9 +12,10 @@ import {
 import type { Instrument, Quote, QuoteProvider } from './providers/types';
 import { backoffSeconds, ProviderHealth, QuoteService } from './quoteService';
 import { clampedSeconds, SETTINGS_DEFAULTS, SETTINGS_MINIMUMS, type SecondsSetting } from './settings';
-import { parseWatchlist } from './symbols';
+import { parseWatchlist, type InvalidEntry } from './symbols';
 
 const SETTINGS = 'codingview';
+const REMOVE_ENTRY_COMMAND = 'codingview.removeSymbolEntry';
 
 export class StatusBarController implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
@@ -21,6 +23,7 @@ export class StatusBarController implements vscode.Disposable {
   private readonly quotes = new Map<string, Quote>();
   private readonly health = new ProviderHealth();
   private instruments: Instrument[] = [];
+  private invalid: InvalidEntry[] = [];
   private index = 0;
   private stale = false;
   private lastError?: string;
@@ -107,6 +110,7 @@ export class StatusBarController implements vscode.Disposable {
   private reload(): void {
     const { instruments, invalid } = parseWatchlist(this.settings().get<string[]>('watchlist', []));
     this.instruments = instruments;
+    this.invalid = invalid;
     if (this.index >= instruments.length) {
       this.index = 0;
     }
@@ -247,12 +251,25 @@ export class StatusBarController implements vscode.Disposable {
       updatedAt,
       stale: this.stale,
       error: this.lastError,
+      invalid: this.invalidRows(),
       labels: {
         updated: (time) => vscode.l10n.t('Updated {0}', time),
         stale: vscode.l10n.t('Quotes are stale'),
         lastError: (message) => vscode.l10n.t('Last error: {0}', message),
+        invalidTitle: vscode.l10n.t('Ignored entries'),
+        remove: vscode.l10n.t('Remove'),
       },
     });
-    return new vscode.MarkdownString(markdown);
+    const tooltip = new vscode.MarkdownString(markdown);
+    tooltip.isTrusted = { enabledCommands: [REMOVE_ENTRY_COMMAND] };
+    return tooltip;
+  }
+
+  private invalidRows(): InvalidTooltipRow[] {
+    return this.invalid.map((entry) => ({
+      entry: entry.entry,
+      reason: entry.reason,
+      removeLink: `command:${REMOVE_ENTRY_COMMAND}?${encodeURIComponent(JSON.stringify([entry.entry]))}`,
+    }));
   }
 }

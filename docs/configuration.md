@@ -13,7 +13,8 @@ Every watchlist entry is `<market>:<code>`.
 
 Duplicates are compared on the canonical `market:CODE` id, so `us:aapl` and `us:AAPL` are one
 entry, as are `hk:700` and `hk:00700`. Invalid entries never break the extension: they are skipped,
-logged to the output channel and rendered as `--`.
+logged to the output channel, listed in the status bar tooltip with their validation message and
+offered a **Remove** link that deletes that raw entry from the settings.
 
 Validation messages, asserted in `src/test/symbols.test.ts`:
 
@@ -36,6 +37,7 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.refreshNow` | Schedules an immediate refresh |
 | `codingview.showList` | Quick pick of every symbol with its quote; picking one rotates to it |
 | `codingview.nextSymbol` | Advances the rotation |
+| `codingview.removeSymbolEntry` | Removes one raw watchlist entry; invoked from the tooltip's **Remove** link, not from the palette |
 
 ## Settings
 

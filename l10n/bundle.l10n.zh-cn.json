@@ -7,6 +7,8 @@
   "The watchlist is empty. Add a symbol first.": "关注列表为空，请先添加标的。",
   "Removed {0} from the watchlist.": "已从关注列表移除 {0}。",
   "Pick a symbol to remove": "选择要移除的标的",
+  "Ignored entries": "被忽略的标的",
+  "Remove": "移除",
   "No data": "无数据",
   "Quotes are stale": "行情已过期",
   "Halted": "停牌",

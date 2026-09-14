@@ -78,3 +78,14 @@ export async function removeSymbol(): Promise<void> {
   await writeWatchlist(watchlist.filter((entry) => entry !== picked));
   void vscode.window.showInformationMessage(vscode.l10n.t('Removed {0} from the watchlist.', picked));
 }
+
+/** Removes one raw entry, used by the "Remove" links in the status bar tooltip. */
+export async function removeSymbolEntry(entry: string): Promise<void> {
+  const watchlist = readWatchlist();
+  const remaining = watchlist.filter((value) => value !== entry);
+  if (remaining.length === watchlist.length) {
+    return;
+  }
+  await writeWatchlist(remaining);
+  void vscode.window.showInformationMessage(vscode.l10n.t('Removed {0} from the watchlist.', entry));
+}
