@@ -23,15 +23,19 @@ file keeps the record of what shipped, plus the ideas that are still open.
 Everything above is covered by `npm test` (unit), `npm run test:smoke` (extension host) or
 `npm run verify:live` (real endpoints); see [testing.md](testing.md).
 
-## Still open
+## Beyond this roadmap (not planned)
 
-| Candidate | Notes |
+These are ideas, not outstanding milestones — every milestone that was on this page is in the table
+above. They are recorded so a future roadmap starts from an informed position rather than from
+scratch.
+
+| Idea | Why it is not planned now |
 | --- | --- |
-| Twelve Data or another keyed source | The `QuoteProvider` interface needs no change; the second key would reuse the `SecretStorage` bootstrap in `extension.ts`. |
-| Per-market delay disclosure | Today the tooltip carries one generic US note; A-share and Hong Kong prices are delayed after their session closes as well. |
-| Sidebar tree view or webview | Deliberately out of scope for a status bar extension; it would need its own rendering and tests. |
-| Holdings value in the tooltip totals | The `P/L` column is per symbol; a portfolio total needs a currency assumption across markets. |
-| Marketplace listing metrics | No telemetry by design, so popularity has to come from the Marketplace reports rather than from the extension. |
+| A second keyed source (Twelve Data) | The keyed-provider milestone shipped with Finnhub; another source would reuse the same `QuoteProvider` interface and the `SecretStorage` bootstrap, so it is mechanical work waiting for a reason. |
+| Per-market delay disclosure | The tooltip carries one US note today; A-share and Hong Kong prices are also delayed after their session closes. Splitting the note per market needs a session calendar, which is a feature of its own. |
+| Sidebar tree view or webview | Rejected in [decisions.md](decisions.md): the product is a glanceable status bar item, and a webview would add a second rendering stack for no gain in the flow it serves. |
+| Portfolio totals in the tooltip | A total needs one currency across A-shares, Hong Kong and US positions, which means storing an FX assumption the extension cannot verify. |
+| Marketplace popularity metrics | Telemetry is a non-goal, so popularity has to come from the Marketplace reports. |
 
 ## Known limitations
 
