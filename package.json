@@ -84,6 +84,14 @@
           "scope": "window",
           "description": "%config.rotateIntervalSeconds%"
         },
+        "codingview.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 8,
+          "minimum": 2,
+          "maximum": 60,
+          "scope": "window",
+          "description": "%config.requestTimeoutSeconds%"
+        },
         "codingview.colorByDirection": {
           "type": "boolean",
           "default": true,

@@ -42,6 +42,7 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.watchlist` | `string[]` | `[]` | Entries use the grammar above |
 | `codingview.refreshIntervalSeconds` | number | `60` | Minimum 15 |
 | `codingview.rotateIntervalSeconds` | number | `5` | Minimum 2 |
+| `codingview.requestTimeoutSeconds` | number | `8` | Minimum 2, maximum 60 |
 | `codingview.colorByDirection` | boolean | `true` | Green up, red down |
 | `codingview.provider` | string | `auto` | `auto`, `tencent`, `sina`, `binance-vision` |
 

@@ -38,6 +38,7 @@ Every entry uses an explicit market prefix:
 | `codingview.watchlist` | `[]` | Symbols to track, using the format above |
 | `codingview.refreshIntervalSeconds` | `60` | Quote refresh interval, minimum 15 |
 | `codingview.rotateIntervalSeconds` | `5` | Status bar rotation interval, minimum 2 |
+| `codingview.requestTimeoutSeconds` | `8` | Provider request timeout before failover, 2–60 |
 | `codingview.colorByDirection` | `true` | Green when up, red when down |
 | `codingview.provider` | `auto` | `auto`, `tencent`, `sina` or `binance-vision` |
 

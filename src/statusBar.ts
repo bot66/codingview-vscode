@@ -10,6 +10,7 @@ import {
 } from './format';
 import type { Instrument, Quote, QuoteProvider } from './providers/types';
 import { backoffSeconds, QuoteService } from './quoteService';
+import { clampedSeconds, SETTINGS_DEFAULTS, SETTINGS_MINIMUMS, type SecondsSetting } from './settings';
 import { parseWatchlist } from './symbols';
 
 const SETTINGS = 'codingview';
@@ -87,9 +88,8 @@ export class StatusBarController implements vscode.Disposable {
     return vscode.workspace.getConfiguration(SETTINGS);
   }
 
-  private readSeconds(key: string, fallback: number, minimum: number): number {
-    const value = this.settings().get<number>(key, fallback);
-    return Number.isFinite(value) ? Math.max(minimum, value) : fallback;
+  private readSeconds(key: SecondsSetting): number {
+    return clampedSeconds(this.settings().get<number>(key), SETTINGS_DEFAULTS[key], SETTINGS_MINIMUMS[key]);
   }
 
   private clearTimers(): void {
@@ -121,7 +121,7 @@ export class StatusBarController implements vscode.Disposable {
     }
 
     this.clearTimers();
-    this.rotateTimer = setInterval(() => this.next(), this.readSeconds('rotateIntervalSeconds', 5, 2) * 1000);
+    this.rotateTimer = setInterval(() => this.next(), this.readSeconds('rotateIntervalSeconds') * 1000);
     this.render();
     this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : 0);
   }
@@ -140,7 +140,7 @@ export class StatusBarController implements vscode.Disposable {
       return;
     }
 
-    const refreshMs = this.readSeconds('refreshIntervalSeconds', 60, 15) * 1000;
+    const refreshMs = this.readSeconds('refreshIntervalSeconds') * 1000;
     if (this.instruments.length === 0) {
       this.scheduleRefresh(refreshMs);
       return;
@@ -151,6 +151,7 @@ export class StatusBarController implements vscode.Disposable {
       const service = new QuoteService({
         providers: this.providers,
         providerMode: this.settings().get<string>('provider', 'auto'),
+        timeoutMs: this.readSeconds('requestTimeoutSeconds') * 1000,
       });
       const outcome = await service.refresh(this.instruments);
 
