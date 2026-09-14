@@ -1,6 +1,6 @@
 import type { Instrument, Market } from './providers/types';
 
-const MARKETS: readonly Market[] = ['cn', 'us', 'crypto'];
+const MARKETS: readonly Market[] = ['cn', 'hk', 'us', 'crypto'];
 
 export class SymbolFormatError extends Error {
   constructor(message: string) {
@@ -15,7 +15,11 @@ function isMarket(value: string): value is Market {
 
 export function normalizeCode(market: Market, code: string): string {
   const trimmed = code.trim().replace(/\s+/g, '');
-  return market === 'cn' ? trimmed : trimmed.toUpperCase();
+  if (market === 'cn') {
+    return trimmed;
+  }
+  // Hong Kong codes are quoted with five digits, so `hk:700` and `hk:00700` are one entry.
+  return market === 'hk' ? (/^\d+$/.test(trimmed) ? trimmed.padStart(5, '0') : trimmed) : trimmed.toUpperCase();
 }
 
 function assertValidCode(market: Market, code: string): void {
@@ -23,6 +27,11 @@ function assertValidCode(market: Market, code: string): void {
     case 'cn':
       if (!/^\d{6}$/.test(code)) {
         throw new SymbolFormatError('China A-share codes must be 6 digits, for example cn:600519.');
+      }
+      return;
+    case 'hk':
+      if (!/^\d{5}$/.test(code)) {
+        throw new SymbolFormatError('Hong Kong codes are up to 5 digits, for example hk:00700.');
       }
       return;
     case 'us':
@@ -103,19 +112,27 @@ export function exchangePrefix(code: string): 'sh' | 'sz' | 'bj' {
 }
 
 export function tencentSymbol(instrument: Instrument): string {
-  if (instrument.market === 'crypto') {
-    throw new SymbolFormatError('Tencent does not support the crypto market.');
+  switch (instrument.market) {
+    case 'cn':
+      return `${exchangePrefix(instrument.code)}${instrument.code}`;
+    case 'hk':
+      return `hk${instrument.code}`;
+    case 'us':
+      return `us${instrument.code}`;
+    default:
+      throw new SymbolFormatError('Tencent does not support the crypto market.');
   }
-  return instrument.market === 'us'
-    ? `us${instrument.code}`
-    : `${exchangePrefix(instrument.code)}${instrument.code}`;
 }
 
 export function sinaSymbol(instrument: Instrument): string {
-  if (instrument.market === 'crypto') {
-    throw new SymbolFormatError('Sina does not support the crypto market.');
+  switch (instrument.market) {
+    case 'cn':
+      return `${exchangePrefix(instrument.code)}${instrument.code}`;
+    case 'hk':
+      return `rt_hk${instrument.code}`;
+    case 'us':
+      return `gb_${instrument.code.toLowerCase()}`;
+    default:
+      throw new SymbolFormatError('Sina does not support the crypto market.');
   }
-  return instrument.market === 'us'
-    ? `gb_${instrument.code.toLowerCase()}`
-    : `${exchangePrefix(instrument.code)}${instrument.code}`;
 }

@@ -23,8 +23,17 @@ describe('parseInstrument', () => {
     expect(() => parseInstrument('600519')).toThrowError('Missing market prefix');
   });
 
+  test('zero pads Hong Kong codes to five digits', () => {
+    expect(parseInstrument('hk:700')).toEqual({ id: 'hk:00700', market: 'hk', code: '00700' });
+    expect(parseInstrument('hk:09988').id).toBe('hk:09988');
+  });
+
   test('rejects an unsupported market', () => {
-    expect(() => parseInstrument('hk:00700')).toThrowError('Unsupported market');
+    expect(() => parseInstrument('jp:7203')).toThrowError('Unsupported market');
+  });
+
+  test('rejects a Hong Kong code that is not up to five digits', () => {
+    expect(() => parseInstrument('hk:123456')).toThrowError('Hong Kong codes');
   });
 
   test('rejects an A-share code that is not 6 digits', () => {
@@ -77,6 +86,13 @@ describe('provider symbols', () => {
   test('builds Sina symbols', () => {
     expect(sinaSymbol(parseInstrument('cn:000001'))).toBe('sz000001');
     expect(sinaSymbol(parseInstrument('us:AAPL'))).toBe('gb_aapl');
+  });
+
+  test('builds Hong Kong symbols for both stock providers', () => {
+    const tencent = parseInstrument('hk:700');
+
+    expect(tencentSymbol(tencent)).toBe('hk00700');
+    expect(sinaSymbol(parseInstrument('hk:09988'))).toBe('rt_hk09988');
   });
 
   test('rejects crypto pairs for the stock providers', () => {

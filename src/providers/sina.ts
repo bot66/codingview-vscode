@@ -65,6 +65,28 @@ export function parseSinaResponse(text: string, bySymbol: Map<string, Instrument
       continue;
     }
 
+    if (instrument.market === 'hk') {
+      const price = toNumber(fields[6]);
+      const prevClose = toNumber(fields[3]);
+      if (!isUsable(price) || !isUsable(prevClose)) {
+        continue;
+      }
+      quotes.push({
+        id: instrument.id,
+        market: instrument.market,
+        code: instrument.code,
+        name: fields[1] || fields[0] || undefined,
+        price,
+        prevClose,
+        change: toNumber(fields[7]) ?? round(price - prevClose),
+        changePercent: toNumber(fields[8]),
+        currency: 'HKD',
+        asOf: fields[17] && fields[18] ? `${fields[17]} ${fields[18]}` : undefined,
+        source: 'sina',
+      });
+      continue;
+    }
+
     const price = toNumber(fields[3]);
     const prevClose = toNumber(fields[2]);
     if (!isUsable(price) || !isUsable(prevClose)) {
@@ -103,7 +125,7 @@ export function createSinaProvider(options: SinaProviderOptions = {}): QuoteProv
   return {
     id: 'sina',
     displayName: 'Sina',
-    supports: (market) => market === 'cn' || market === 'us',
+    supports: (market) => market === 'cn' || market === 'hk' || market === 'us',
     fetch: async (instruments, signal) => {
       const targets = instruments.filter((instrument) => instrument.market !== 'crypto');
       if (targets.length === 0) {

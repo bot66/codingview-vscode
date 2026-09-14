@@ -66,6 +66,28 @@ describe('parseTencentResponse', () => {
 
     expect(quotes).toEqual([]);
   });
+
+  test('parses a Hong Kong quote in HKD', () => {
+    const tencent = parseInstrument('hk:700');
+
+    const quotes = parseTencentResponse(fixture('tencent-hk.txt'), symbolMap([['hk00700', tencent]]));
+
+    expect(quotes).toEqual([
+      {
+        id: 'hk:00700',
+        market: 'hk',
+        code: '00700',
+        name: '腾讯控股',
+        price: 430.6,
+        prevClose: 428.4,
+        change: 2.2,
+        changePercent: 0.51,
+        currency: 'HKD',
+        asOf: '2026/09/14 16:08:10',
+        source: 'tencent',
+      },
+    ]);
+  });
 });
 
 describe('createTencentProvider', () => {
@@ -97,6 +119,21 @@ describe('createTencentProvider', () => {
 
     expect(quotes).toEqual([]);
     expect(urls).toEqual([]);
+  });
+
+  test('requests Hong Kong symbols with the hk prefix', async () => {
+    const urls: string[] = [];
+    const provider = createTencentProvider({
+      httpGet: async (url) => {
+        urls.push(url);
+        return new TextEncoder().encode(fixture('tencent-hk.txt'));
+      },
+    });
+
+    const quotes = await provider.fetch([parseInstrument('hk:700'), parseInstrument('hk:09988')]);
+
+    expect(urls).toEqual(['https://qt.gtimg.cn/q=hk00700,hk09988']);
+    expect(quotes.map((quote) => quote.id)).toEqual(['hk:00700', 'hk:09988']);
   });
 
   test('decodes GBK encoded instrument names', async () => {

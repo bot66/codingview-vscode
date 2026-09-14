@@ -18,6 +18,7 @@ Every entry uses an explicit market prefix:
 | Market | Example | Notes |
 | --- | --- | --- |
 | China A-shares | `cn:600519` | 6 digits; `sh`, `sz` and `bj` prefixes are derived from the code |
+| Hong Kong stocks | `hk:00700` | Up to 5 digits, zero-padded, so `hk:700` works too |
 | US stocks | `us:AAPL` | Dots are allowed for share classes, for example `us:BRK.B` |
 | Crypto | `crypto:BTCUSDT` | Any Binance spot pair, for example `crypto:BTCUSDT` |
 
@@ -50,7 +51,7 @@ Failures back off at 60, 120, 240 and then 300 seconds while keeping the last kn
 No API key, account or telemetry is involved. Requests go straight from VS Code to these public
 endpoints, and nothing is sent to any server owned by this project:
 
-- `qt.gtimg.cn` for A-shares and US stocks (GBK encoded, batched up to 50 symbols per request)
+- `qt.gtimg.cn` for A-shares, Hong Kong and US stocks (GBK encoded, batched up to 50 symbols per request)
 - `hq.sinajs.cn` as the stock fallback, which requires a `finance.sina.com.cn` Referer header
 - `data-api.binance.vision` for crypto (the `api.binance.com` main site is unreachable on some networks)
 
@@ -64,6 +65,7 @@ npm run compile   # tsc --noEmit plus an esbuild bundle into dist/
 npm run watch     # incremental bundle while debugging
 npm run lint      # ESLint over src/
 npm test          # Vitest unit tests
+npm run verify:live   # ask the real endpoints for one symbol per market
 npm run package   # produce a .vsix with vsce
 ```
 

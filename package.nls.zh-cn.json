@@ -6,7 +6,7 @@
   "command.refreshNow": "CodingView: 立即刷新",
   "command.showList": "CodingView: 查看关注列表",
   "command.nextSymbol": "CodingView: 下一个标的",
-  "config.watchlist": "状态栏中显示的标的。写法：`cn:600519`、`us:AAPL`、`crypto:BTCUSDT`。",
+  "config.watchlist": "状态栏中显示的标的。写法：`cn:600519`、`hk:00700`、`us:AAPL`、`crypto:BTCUSDT`。",
   "config.refreshIntervalSeconds": "行情拉取间隔（秒，最小 15）。",
   "config.rotateIntervalSeconds": "状态栏轮播间隔（秒，最小 2）。",
   "config.requestTimeoutSeconds": "单个行情源的请求超时（秒，最小 2，最大 60），超时后切换到下一个行情源。",

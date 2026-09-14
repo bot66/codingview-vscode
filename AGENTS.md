@@ -19,6 +19,7 @@ item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vi
 - `npm run watch` — incremental bundle; `F5` launches the Extension Development Host.
 - `npm run lint` — run ESLint across `src/`.
 - `npm test` / `npm run test:watch` — Vitest unit suite.
+- `npm run verify:live` — live check against the real quote endpoints for one symbol per market.
 - `npm run package` — `vsce package --no-dependencies` (keep the flag: vsce's npm dependency probe returns an empty file list here).
 
 ## Coding Style & Naming Conventions

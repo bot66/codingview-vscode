@@ -23,6 +23,14 @@ the market from the code (`600519` vs `AAPL`), which needs heuristics that break
 tickers, and exposing provider-native codes (`sh600519`, `gb_aapl`), which leak implementation
 details into user configuration.
 
+## Hong Kong through the existing stock providers
+
+`hk:00700` reuses Tencent and Sina, which already answer `hk00700` and `rt_hk00700` with a keyless
+request, so Hong Kong cost one market in the union, a prefix rule and a third parse branch. Rejected:
+a separate provider for the Hong Kong exchange (another endpoint to keep alive for no extra data)
+and leaving Hong Kong out, which contradicted the audience of developers with cross-border
+portfolios.
+
 ## Watchlist in settings.json
 
 Storing the list in `codingview.watchlist` lets users hand-edit it, share it per workspace and diff

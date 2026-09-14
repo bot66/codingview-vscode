@@ -7,20 +7,22 @@ Every watchlist entry is `<market>:<code>`.
 | Market | Pattern | Example | Notes |
 | --- | --- | --- | --- |
 | `cn` | 6 digits | `cn:600519` | Exchange prefix derived from the code |
+| `hk` | up to 5 digits | `hk:00700`, `hk:700` | Zero-padded to five digits on save |
 | `us` | Letter, then up to 9 letters, digits, `.` or `-` | `us:AAPL`, `us:BRK.B` | Upper-cased on save |
 | `crypto` | 2–20 of `A-Z0-9` | `crypto:BTCUSDT` | Any Binance spot pair; upper-cased on save |
 
 Duplicates are compared on the canonical `market:CODE` id, so `us:aapl` and `us:AAPL` are one
-entry. Invalid entries never break the extension: they are skipped, logged to the output channel
-and rendered as `--`.
+entry, as are `hk:700` and `hk:00700`. Invalid entries never break the extension: they are skipped,
+logged to the output channel and rendered as `--`.
 
 Validation messages, asserted in `src/test/symbols.test.ts`:
 
 | Input | Message |
 | --- | --- |
 | `600519` | Missing market prefix. Use cn:600519, us:AAPL or crypto:BTCUSDT. |
-| `hk:00700` | Unsupported market "hk". Available markets: cn, us, crypto. |
+| `jp:7203` | Unsupported market "jp". Available markets: cn, hk, us, crypto. |
 | `cn:6005` | China A-share codes must be 6 digits, for example cn:600519. |
+| `hk:123456` | Hong Kong codes are up to 5 digits, for example hk:00700. |
 | `us:123` | US tickers look like us:AAPL or us:BRK.B. |
 | `crypto:B` | Crypto pairs look like crypto:BTCUSDT. |
 | `cn:700001` | Cannot infer the exchange for code "700001". |

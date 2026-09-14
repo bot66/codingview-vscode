@@ -54,13 +54,25 @@ export function parseTencentResponse(text: string, bySymbol: Map<string, Instrum
       prevClose,
       change: toNumber(fields[31]),
       changePercent: toNumber(fields[32]),
-      currency: instrument.market === 'us' ? fields[35] || 'USD' : 'CNY',
+      currency: currencyFor(instrument.market, fields[35]),
       asOf: fields[30] || undefined,
       source: 'tencent',
     });
   }
 
   return quotes;
+}
+
+/** Tencent reports the US currency in the payload; A-shares and Hong Kong are fixed. */
+function currencyFor(market: Instrument['market'], reported: string | undefined): string {
+  switch (market) {
+    case 'us':
+      return reported || 'USD';
+    case 'hk':
+      return 'HKD';
+    default:
+      return 'CNY';
+  }
 }
 
 export interface TencentProviderOptions {
@@ -73,7 +85,7 @@ export function createTencentProvider(options: TencentProviderOptions = {}): Quo
   return {
     id: 'tencent',
     displayName: 'Tencent',
-    supports: (market) => market === 'cn' || market === 'us',
+    supports: (market) => market === 'cn' || market === 'hk' || market === 'us',
     fetch: async (instruments, signal) => {
       const targets = instruments.filter((instrument) => instrument.market !== 'crypto');
       if (targets.length === 0) {

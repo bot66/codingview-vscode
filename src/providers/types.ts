@@ -1,4 +1,4 @@
-export type Market = 'cn' | 'us' | 'crypto';
+export type Market = 'cn' | 'hk' | 'us' | 'crypto';
 
 export interface Instrument {
   /** Canonical identifier, for example `cn:600519`. */

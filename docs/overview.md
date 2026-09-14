@@ -12,7 +12,7 @@ developer can follow their portfolio without leaving the editor.
 
 - One left-aligned status bar item rotating through the watchlist every 5 seconds.
 - Watchlist stored in `codingview.watchlist`, managed by commands and editable by hand.
-- Markets: mainland China A-shares, US stocks and crypto spot pairs.
+- Markets: mainland China A-shares, Hong Kong stocks, US stocks and crypto spot pairs.
 - Keyless quote sources: Tencent (preferred), Sina (fallback) and Binance Vision.
 - Refresh every 60 seconds with exponential backoff; stale prices stay visible.
 
@@ -20,7 +20,6 @@ developer can follow their portfolio without leaving the editor.
 
 - No holdings, cost basis or profit/loss tracking.
 - No webview, charts or sidebar tree view.
-- No Hong Kong listings; the stock endpoints support them, the symbol grammar does not expose them.
 - No API keys, accounts or telemetry.
 - No CI pipeline.
 

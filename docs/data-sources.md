@@ -18,6 +18,7 @@ nothing for a symbol. Crypto never reaches the stock providers.
 | `cn:600519` | `sh600519` | `sh600519` |
 | `cn:000001` | `sz000001` | `sz000001` |
 | `cn:920002` | `bj920002` | `bj920002` |
+| `hk:00700` | `hk00700` | `rt_hk00700` |
 | `us:AAPL` | `usAAPL` | `gb_aapl` |
 | `crypto:BTCUSDT` | not supported | not supported |
 
@@ -42,12 +43,17 @@ v_sh600519="1~贵州茅台~600519~1277.96~1275.16~1277.27~…~20260914161450~2.8
 | 30 | timestamp | `asOf` — `20260914161450` for A-shares, `2026-09-14 10:33:20` for US |
 | 31 | change | Absolute change |
 | 32 | change percent | Status bar |
-| 35 | currency | US only; A-shares are hard-coded `CNY` |
+| 35 | currency | US only; A-shares are hard-coded `CNY` and Hong Kong `HKD` |
 
 Unknown codes are not an HTTP error: the endpoint answers with a zero-priced stub (for example
 `Nasdaq Test Symbol`), which is why the parser requires `price > 0` and `prevClose > 0` before
 emitting a quote. A halted instrument that reports 0 is therefore indistinguishable from an
 unknown code and shows `--`.
+
+Hong Kong rows (`hk00700`) keep the same field layout — index 3 is the price, 4 the previous close,
+30 the timestamp (`2026/09/14 16:08:10`), 31/32 the change and the change percent — and report the
+currency as `HKD`. Unlike US tickers, an unknown Hong Kong code comes back as no row at all instead
+of a zero-priced stub.
 
 ## Sina
 
@@ -70,6 +76,11 @@ because the endpoint does not report them. Derived values are rounded to 4 decim
 noise such as `332.27000000000004`. Payloads without fields (for example
 `var hq_str_sz399001=""`) are skipped.
 
+Hong Kong rows use `rt_hk00700` and a third layout: English and Chinese names first, then
+`open, prevClose, high, low, price, change, changePercent` (indexes 2–8), with the timestamp at
+indexes 17 and 18 and the currency fixed to `HKD`. The tooltip shows the Chinese name when the
+endpoint supplies one.
+
 ## Binance Vision
 
 A batch request sends a URL-encoded JSON array:
@@ -87,7 +98,9 @@ derived from the quote-asset suffix of the pair (`USDT`, `USDC`, `FDUSD`, `TUSD`
 
 - `qt.gtimg.cn` was intermittently unreachable from the development sandbox — a ~10.5 s connection
   timeout for both `curl` and Node's `fetch`. The 8 s request timeout fires first and Sina serves
-  the quotes, so this exercises the failover path rather than an error path.
+  the quotes, so this exercises the failover path rather than an error path. In the latest run
+  `curl` reached it in ~12 s while Node's `fetch` failed outright after ~15 s with `fetch failed`;
+  the Tencent rows below are therefore captured with `curl` and asserted against fixtures.
 - `hq.sinajs.cn` requires the `Referer` header. Node's global `fetch` forwards it (verified); it is
   not stripped the way a browser would.
 - `query1.finance.yahoo.com` answered 429/403 during evaluation and is not used.

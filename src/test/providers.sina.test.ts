@@ -63,6 +63,28 @@ describe('parseSinaResponse', () => {
 
     expect(quotes).toEqual([]);
   });
+
+  test('parses a Hong Kong quote in HKD', () => {
+    const tencent = parseInstrument('hk:700');
+
+    const quotes = parseSinaResponse(fixture('sina-hk.txt'), symbolMap([['rt_hk00700', tencent]]));
+
+    expect(quotes).toEqual([
+      {
+        id: 'hk:00700',
+        market: 'hk',
+        code: '00700',
+        name: '腾讯控股',
+        price: 430.6,
+        prevClose: 428.4,
+        change: 2.2,
+        changePercent: 0.514,
+        currency: 'HKD',
+        asOf: '2026/09/14 16:08:08',
+        source: 'sina',
+      },
+    ]);
+  });
 });
 
 describe('createSinaProvider', () => {
@@ -80,5 +102,20 @@ describe('createSinaProvider', () => {
     expect(requests).toHaveLength(1);
     expect(requests[0].url).toBe('https://hq.sinajs.cn/list=sh600519,gb_aapl');
     expect(requests[0].init?.headers).toEqual({ Referer: 'https://finance.sina.com.cn/' });
+  });
+
+  test('requests Hong Kong symbols with the rt_hk prefix', async () => {
+    const requests: string[] = [];
+    const provider = createSinaProvider({
+      httpGet: async (url) => {
+        requests.push(url);
+        return new TextEncoder().encode(fixture('sina-hk.txt'));
+      },
+    });
+
+    const quotes = await provider.fetch([parseInstrument('hk:700')]);
+
+    expect(requests).toEqual(['https://hq.sinajs.cn/list=rt_hk00700']);
+    expect(quotes[0]).toMatchObject({ id: 'hk:00700', price: 430.6 });
   });
 });

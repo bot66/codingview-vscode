@@ -28,6 +28,21 @@ Two rules keep the suite honest:
 
 Run them with `npm test`, or `npm run test:watch` while iterating.
 
+## Live provider check
+
+`npm run verify:live` bundles the sources with esbuild and requests one symbol per market from the
+real endpoints, printing the resolved quotes, the unresolved symbols and the provider errors. Use
+it after touching a parser or a symbol builder, and after capturing new fixtures:
+
+```bash
+npm run verify:live                          # cn:600519, hk:00700, us:AAPL, crypto:BTCUSDT
+npm run verify:live -- cn:000001 us:BRK.B    # any watchlist entries
+npm run verify:live -- --provider=sina --timeout=20
+```
+
+It exits non-zero only when a symbol stays unresolved, so a covered failover is reported without
+failing the run.
+
 ## Not covered automatically
 
 `statusBar.ts`, `watchlist.ts` and `extension.ts` need a running editor, so they rely on
