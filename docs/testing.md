@@ -13,6 +13,9 @@ Two rules keep the suite honest:
 - Fixtures under `src/test/fixtures/` are copied from real responses. Tencent and Sina payloads
   arrive as GBK; the decoding test builds GBK bytes inline (`苹果` = `C6 BB B9 FB`) and asserts the
   decoded name, while the other specs run the already-decoded text through the parsers.
+  Two fixtures are exceptions and say so by name: `tencent-halted-synthetic.txt` is the real
+  A-share row with the price fields zeroed, and `finnhub-quote.json` follows the documented
+  response shape because the endpoint needs a key. `finnhub-error.json` is a real 401 body.
 
 ## Coverage
 

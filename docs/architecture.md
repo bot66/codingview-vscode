@@ -30,8 +30,8 @@ plain Node.
 
 1. `statusBar.ts` reads `codingview.*`, parses the watchlist (dropping invalid and duplicate
    entries) and prunes quotes belonging to removed symbols.
-2. `QuoteService.refresh` walks providers in order — Tencent, Sina, Binance Vision. Each provider
-   receives the still-unresolved instruments it `supports`.
+2. `QuoteService.refresh` walks providers in order — Finnhub (only when a key is cached), Tencent,
+   Sina, Binance Vision. Each provider receives the still-unresolved instruments it `supports`.
 3. Instruments are chunked 50 at a time; every chunk runs under its own `AbortController` with the
    `codingview.requestTimeoutSeconds` timeout (8 s by default).
 4. A provider that throws is recorded in `providerErrors` and its instruments stay pending for the

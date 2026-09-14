@@ -55,6 +55,7 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.nextSymbol` | Advances the rotation |
 | `codingview.pinSymbol` | Prompts for the pinned symbol; an empty answer unpins |
 | `codingview.setHolding` | Picks a symbol, then asks for the quantity and average cost; an empty quantity clears the holding |
+| `codingview.setApiKey` | Stores a Finnhub API key in `SecretStorage`; an empty answer removes it |
 | `codingview.removeSymbolEntry` | Removes one raw watchlist entry; invoked from the tooltip's **Remove** link, not from the palette |
 
 ## Settings
@@ -66,12 +67,20 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.rotateIntervalSeconds` | number | `5` | Minimum 2 |
 | `codingview.requestTimeoutSeconds` | number | `8` | Minimum 2, maximum 60 |
 | `codingview.colorByDirection` | boolean | `true` | Green up, red down |
-| `codingview.provider` | string | `auto` | `auto`, `tencent`, `sina`, `binance-vision` |
+| `codingview.provider` | string | `auto` | `auto`, `finnhub`, `tencent`, `sina`, `binance-vision` |
 | `codingview.pinnedSymbol` | string | `''` | One entry that never rotates; empty means unpinned |
 
 All settings use `scope: window`, so a folder can override the list for one workspace.
-`codingview.provider: auto` walks Tencent, then Sina, then Binance Vision; a pinned id restricts
-the cycle to that provider (an unknown id silently falls back to `auto`).
+`codingview.provider: auto` walks Finnhub (only when a key is stored), then Tencent, Sina and
+Binance Vision; a pinned id restricts the cycle to that provider (an unknown id silently falls back
+to `auto`).
+
+## API keys
+
+The only keyed source is Finnhub. **CodingView: Set API Key** prompts for the token and writes it to
+`vscode.SecretStorage`; it is never stored in `settings.json`, never logged, and sent as the
+`X-Finnhub-Token` header rather than a query parameter, so it cannot appear in an error message.
+Leaving the input box empty deletes the stored key and US quotes fall back to Tencent and Sina.
 
 ## Where the watchlist is written
 

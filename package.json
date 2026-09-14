@@ -64,6 +64,10 @@
       {
         "command": "codingview.setHolding",
         "title": "%command.setHolding%"
+      },
+      {
+        "command": "codingview.setApiKey",
+        "title": "%command.setApiKey%"
       }
     ],
     "configuration": {
@@ -141,6 +145,7 @@
           "type": "string",
           "enum": [
             "auto",
+            "finnhub",
             "tencent",
             "sina",
             "binance-vision"

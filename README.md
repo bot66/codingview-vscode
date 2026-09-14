@@ -33,6 +33,7 @@ Every entry uses an explicit market prefix:
 | `CodingView: Next Symbol` | Advances the rotation manually |
 | `CodingView: Pin Symbol` | Keeps one symbol in its own status bar item, next to the rotation |
 | `CodingView: Set Holding` | Records the quantity and average cost for a symbol, for profit and loss |
+| `CodingView: Set API Key` | Stores a Finnhub key in the OS keychain for faster US quotes |
 
 ## Settings
 
@@ -43,17 +44,22 @@ Every entry uses an explicit market prefix:
 | `codingview.rotateIntervalSeconds` | `5` | Status bar rotation interval, minimum 2 |
 | `codingview.requestTimeoutSeconds` | `8` | Provider request timeout before failover, 2–60 |
 | `codingview.colorByDirection` | `true` | Green when up, red when down |
-| `codingview.provider` | `auto` | `auto`, `tencent`, `sina` or `binance-vision` |
+| `codingview.provider` | `auto` | `auto`, `finnhub`, `tencent`, `sina` or `binance-vision` |
 | `codingview.pinnedSymbol` | `''` | A symbol that stays visible instead of rotating |
 
-`auto` tries Tencent first, falls back to Sina for stocks, and uses Binance Vision for crypto.
-Failures back off at 60, 120, 240 and then 300 seconds while keeping the last known prices on screen.
+`auto` uses Finnhub when a key is stored, otherwise it starts at Tencent, falls back to Sina for
+stocks, and uses Binance Vision for crypto. Failures back off at 60, 120, 240 and then 300 seconds
+while keeping the last known prices on screen, and a provider that fails twice in a row is skipped
+for the next three cycles.
 
 ## Data sources and privacy
 
-No API key, account or telemetry is involved. Requests go straight from VS Code to these public
-endpoints, and nothing is sent to any server owned by this project:
+Finnhub is optional and off until you store a key with **CodingView: Set API Key**; the key is kept
+in the OS keychain through `SecretStorage` and sent as a header. Otherwise no key, account or
+telemetry is involved. Requests go straight from VS Code to these public endpoints, and nothing is
+sent to any server owned by this project:
 
+- `finnhub.io` for US stocks, when a key is stored
 - `qt.gtimg.cn` for A-shares, Hong Kong and US stocks (GBK encoded, batched up to 50 symbols per request)
 - `hq.sinajs.cn` as the stock fallback, which requires a `finance.sina.com.cn` Referer header
 - `data-api.binance.vision` for crypto (the `api.binance.com` main site is unreachable on some networks)

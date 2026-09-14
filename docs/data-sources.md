@@ -4,12 +4,15 @@
 
 | Provider id | Markets | Auth | Endpoint |
 | --- | --- | --- | --- |
-| `tencent` | A-shares, US | none | `https://qt.gtimg.cn/q=<symbols>` |
-| `sina` | A-shares, US | none | `https://hq.sinajs.cn/list=<symbols>` |
+| `finnhub` | US | API key in `SecretStorage` | `https://finnhub.io/api/v1/quote?symbol=<CODE>` |
+| `tencent` | A-shares, Hong Kong, US | none | `https://qt.gtimg.cn/q=<symbols>` |
+| `sina` | A-shares, Hong Kong, US | none | `https://hq.sinajs.cn/list=<symbols>` |
 | `binance-vision` | crypto | none | `https://data-api.binance.vision/api/v3/ticker/24hr?symbols=[…]` |
 
-Tencent is preferred; Sina covers the same markets and is used when Tencent fails or resolves
-nothing for a symbol. Crypto never reaches the stock providers.
+Finnhub leads for US symbols, but only once a key is stored; without one it reports that it does not
+support any market, so a fresh install stays keyless. Tencent is then preferred for stocks, Sina
+covers the same markets and is used when Tencent fails or resolves nothing for a symbol, and crypto
+never reaches the stock providers.
 
 ## Symbol translation
 
@@ -102,6 +105,20 @@ arrive as an object such as `{"code":-1121,"msg":"Invalid symbol."}` and are rai
 `ProviderError`, which the service records before retrying the fallback provider. `currency` is
 derived from the quote-asset suffix of the pair (`USDT`, `USDC`, `FDUSD`, `TUSD`, `BTC`, `ETH`,
 `BNB`, `EUR`, `TRY`).
+
+## Finnhub
+
+US quotes only, and only when the user stored a key with **CodingView: Set API Key**. The key lives
+in `vscode.SecretStorage` (never in `settings.json`) and travels in the `X-Finnhub-Token` header, so
+it cannot leak through a request URL or an error message. There is no batch quote endpoint, so the
+provider issues one request per symbol; the free tier allows 60 requests per minute, which covers a
+50 symbol watchlist cycle.
+
+The response is `{"c":261.74,"d":2.24,"dp":0.8652,"h":264.9,"l":259.5,"o":260.4,"pc":259.5,"t":1757847600}`:
+`c` is the current price, `pc` the previous close, `d`/`dp` the change and change percent and `t` the
+timestamp in seconds. `c: 0` means Finnhub cannot price the symbol, so the parser returns nothing
+and the cycle falls through to Tencent and Sina. Errors arrive as `{"error":"Invalid API key."}`, and
+a 401/403 is translated into a message that points at the command instead of echoing the URL.
 
 ## Network behaviour observed
 

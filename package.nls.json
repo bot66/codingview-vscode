@@ -8,6 +8,7 @@
   "command.nextSymbol": "CodingView: Next Symbol",
   "command.pinSymbol": "CodingView: Pin Symbol",
   "command.setHolding": "CodingView: Set Holding",
+  "command.setApiKey": "CodingView: Set API Key",
   "config.watchlist": "Symbols shown in the status bar. Use `cn:600519`, `hk:00700`, `us:AAPL` or `crypto:BTCUSDT`. To track profit and loss, replace an entry with an object: `{ \"symbol\": \"cn:600519\", \"quantity\": 100, \"cost\": 1500 }`.",
   "config.watchlist.symbolEntry": "A symbol such as `cn:600519`, `hk:00700`, `us:AAPL` or `crypto:BTCUSDT`.",
   "config.watchlist.quantity": "How many units are held; requires `cost`.",
@@ -17,5 +18,5 @@
   "config.requestTimeoutSeconds": "How long to wait for a quote provider before failing over, in seconds (minimum 2, maximum 60).",
   "config.pinnedSymbol": "A symbol that stays in its own status bar item instead of rotating, for example `cn:600519`. Empty means no pin.",
   "config.colorByDirection": "Color the status bar item green when the current symbol is up and red when it is down.",
-  "config.provider": "Quote source. `auto` tries tencent, then sina for stocks, and binance-vision for crypto."
+  "config.provider": "Quote source. `auto` tries finnhub when a key is stored, then tencent, then sina for stocks, and binance-vision for crypto."
 }

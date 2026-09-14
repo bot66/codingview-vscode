@@ -6,9 +6,20 @@ import { StatusBarController } from './statusBar';
 import { parseInstrument, watchlistEntrySymbol } from './symbols';
 import { addSymbol, pinSymbol, readWatchlist, removeSymbol, removeSymbolEntry, setHolding } from './watchlist';
 
+const FINNHUB_SECRET_KEY = 'codingview.finnhubApiKey';
+
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('CodingView');
-  const controller = new StatusBarController(createDefaultProviders(), output);
+  // The keyed provider asks for its secret synchronously, so `SecretStorage` is mirrored here.
+  const finnhubApiKey = { current: undefined as string | undefined };
+  const controller = new StatusBarController(
+    createDefaultProviders({ finnhubApiKey: () => finnhubApiKey.current }),
+    output,
+  );
+
+  const readSecrets = async (): Promise<void> => {
+    finnhubApiKey.current = await context.secrets.get(FINNHUB_SECRET_KEY);
+  };
 
   context.subscriptions.push(
     output,
@@ -21,9 +32,16 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('codingview.refreshNow', () => controller.refreshNow()),
     vscode.commands.registerCommand('codingview.nextSymbol', () => controller.next()),
     vscode.commands.registerCommand('codingview.showList', () => showList(controller)),
+    vscode.commands.registerCommand('codingview.setApiKey', () => setApiKey(context)),
+    context.secrets.onDidChange((event) => {
+      if (event.key === FINNHUB_SECRET_KEY) {
+        void readSecrets().then(() => controller.refreshNow());
+      }
+    }),
   );
 
   controller.start();
+  void readSecrets().then(() => controller.refreshNow());
 }
 
 export function deactivate(): void {
@@ -65,4 +83,36 @@ async function showList(controller: StatusBarController): Promise<void> {
   if (picked) {
     controller.focus(picked.label);
   }
+}
+
+/** Stores the Finnhub key in `SecretStorage`, never in settings JSON. */
+async function setApiKey(context: vscode.ExtensionContext): Promise<void> {
+  const stored = await context.secrets.get(FINNHUB_SECRET_KEY);
+  const input = await vscode.window.showInputBox({
+    prompt: vscode.l10n.t('Paste a Finnhub API key (finnhub.io). Leave the box empty to stop using Finnhub.'),
+    placeHolder: 'c1234567890abcdefghijklmnopqrstuv',
+    password: true,
+    ignoreFocusOut: true,
+    validateInput: (value) =>
+      value.trim().length === 0 || /^[A-Za-z0-9_-]{10,}$/.test(value.trim())
+        ? undefined
+        : vscode.l10n.t('That does not look like a Finnhub key.'),
+  });
+  if (input === undefined) {
+    return;
+  }
+
+  const key = input.trim();
+  if (key.length === 0) {
+    await context.secrets.delete(FINNHUB_SECRET_KEY);
+    if (stored !== undefined) {
+      void vscode.window.showInformationMessage(vscode.l10n.t('Cleared the stored Finnhub API key.'));
+    }
+    return;
+  }
+
+  await context.secrets.store(FINNHUB_SECRET_KEY, key);
+  void vscode.window.showInformationMessage(
+    vscode.l10n.t('Stored the Finnhub API key. US quotes will use it from the next refresh.'),
+  );
 }

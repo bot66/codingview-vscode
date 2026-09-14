@@ -287,6 +287,7 @@ export class StatusBarController implements vscode.Disposable {
       stale: this.stale,
       error: this.lastError,
       invalid: this.invalidRows(),
+      notes: this.tooltipNotes(),
       labels: {
         updated: (time) => vscode.l10n.t('Updated {0}', time),
         stale: vscode.l10n.t('Quotes are stale'),
@@ -306,6 +307,12 @@ export class StatusBarController implements vscode.Disposable {
       reason: entry.reason,
       removeLink: `command:${REMOVE_ENTRY_COMMAND}?${encodeURIComponent(JSON.stringify([entry.entry]))}`,
     }));
+  }
+
+  /** US quotes arrive with a delay on some endpoints; say so instead of letting users assume. */
+  private tooltipNotes(): string[] {
+    const hasUs = this.pinnedInstrument?.market === 'us' || this.instruments.some((item) => item.market === 'us');
+    return hasUs ? [vscode.l10n.t('US quotes may be delayed by the source.')] : [];
   }
 
   /** Profit for a held instrument, optionally with the percentage, or undefined without a price. */

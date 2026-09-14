@@ -116,11 +116,13 @@ export interface TooltipArgs {
   staleMessage?: string;
   error?: string;
   invalid?: readonly InvalidTooltipRow[];
+  /** Extra lines, for example the delayed-quote disclosure. */
+  notes?: readonly string[];
   labels?: Partial<TooltipLabels>;
 }
 
 export function tooltipMarkdown(args: TooltipArgs): string {
-  const { rows, updatedAt, stale, staleMessage, error, invalid, labels } = args;
+  const { rows, updatedAt, stale, staleMessage, error, invalid, notes, labels } = args;
   const updated = labels?.updated ?? ((time: string) => `Last updated ${time}`);
   const staleText = labels?.stale ?? 'Quotes are stale';
   const lastError = labels?.lastError ?? ((message: string) => `Last error: ${message}`);
@@ -149,6 +151,9 @@ export function tooltipMarkdown(args: TooltipArgs): string {
   }
   if (updatedAt) {
     lines.push('', updated(updatedAt));
+  }
+  for (const note of notes ?? []) {
+    lines.push('', `$(info) ${note}`);
   }
   if (stale) {
     lines.push('', `$(warning) ${staleMessage ?? staleText}`);

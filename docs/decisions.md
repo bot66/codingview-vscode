@@ -24,6 +24,15 @@ onboarding. Rejected: requiring a Finnhub or Alpha Vantage key (extra friction, 
 rate-limited) as the primary path. The `QuoteProvider` interface keeps keyed sources available
 later; secrets would go to `vscode.SecretStorage`, never to settings JSON.
 
+## Finnhub as an opt-in keyed source
+
+The `QuoteProvider` interface made the keyed source a drop-in addition, so Finnhub sits first in the
+failover order but reports that it supports nothing until a key is stored. The token goes to
+`SecretStorage` and to the `X-Finnhub-Token` header. Rejected: a key field in `settings.json`
+(secrets end up in dotfiles, diffs and screenshots) and a token in the query string (tokens leak
+into URLs, logs and error messages). Twelve Data was left for later; the interface needs no change
+to add it.
+
 ## Explicit market prefixes
 
 `cn:600519`, `us:AAPL`, `crypto:BTCUSDT` are unambiguous and self-documenting. Rejected: guessing

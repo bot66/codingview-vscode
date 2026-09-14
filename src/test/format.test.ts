@@ -202,4 +202,14 @@ describe('tooltipMarkdown', () => {
     expect(markdown).toContain('| Symbol | Price | Change | Name |');
     expect(markdown).not.toContain('P/L');
   });
+
+  test('adds notes such as the delay disclosure', () => {
+    const markdown = tooltipMarkdown({
+      rows: [{ id: 'us:AAPL', name: '', price: '333.40', change: '+0.34%' }],
+      stale: false,
+      notes: ['US quotes may be delayed by the source.'],
+    });
+
+    expect(markdown).toContain('US quotes may be delayed by the source.');
+  });
 });
