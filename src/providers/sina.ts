@@ -46,7 +46,11 @@ export function parseSinaResponse(text: string, bySymbol: Map<string, Instrument
     if (instrument.market === 'us') {
       const price = toNumber(fields[1]);
       const change = toNumber(fields[4]);
-      if (!isUsable(price) || change === undefined) {
+      if (change === undefined) {
+        continue;
+      }
+      if (!isUsable(price)) {
+        quotes.push(haltedQuote(instrument, fields[0]));
         continue;
       }
       quotes.push({
@@ -68,7 +72,11 @@ export function parseSinaResponse(text: string, bySymbol: Map<string, Instrument
     if (instrument.market === 'hk') {
       const price = toNumber(fields[6]);
       const prevClose = toNumber(fields[3]);
-      if (!isUsable(price) || !isUsable(prevClose)) {
+      if (!isUsable(prevClose)) {
+        continue;
+      }
+      if (!isUsable(price)) {
+        quotes.push(haltedQuote(instrument, fields[1] || fields[0], prevClose));
         continue;
       }
       quotes.push({
@@ -89,7 +97,11 @@ export function parseSinaResponse(text: string, bySymbol: Map<string, Instrument
 
     const price = toNumber(fields[3]);
     const prevClose = toNumber(fields[2]);
-    if (!isUsable(price) || !isUsable(prevClose)) {
+    if (!isUsable(prevClose)) {
+      continue;
+    }
+    if (!isUsable(price)) {
+      quotes.push(haltedQuote(instrument, fields[0], prevClose));
       continue;
     }
     const change = round(price - prevClose);
@@ -113,6 +125,21 @@ export function parseSinaResponse(text: string, bySymbol: Map<string, Instrument
 
 function isUsable(value: number | undefined): value is number {
   return value !== undefined && value > 0;
+}
+
+/** A suspended instrument: the symbol resolved, but no trade produced a price today. */
+function haltedQuote(instrument: Instrument, name: string | undefined, prevClose?: number): Quote {
+  return {
+    id: instrument.id,
+    market: instrument.market,
+    code: instrument.code,
+    name: name || undefined,
+    price: 0,
+    prevClose,
+    halted: true,
+    currency: instrument.market === 'us' ? 'USD' : instrument.market === 'hk' ? 'HKD' : 'CNY',
+    source: 'sina',
+  };
 }
 
 export interface SinaProviderOptions {

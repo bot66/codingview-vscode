@@ -27,19 +27,36 @@ export function formatChangePercent(percent: number | undefined): string {
 }
 
 export function directionOf(quote: Quote | undefined): Direction {
-  if (!quote || quote.changePercent === undefined || quote.changePercent === 0) {
+  if (!quote || quote.halted || quote.changePercent === undefined || quote.changePercent === 0) {
     return 'flat';
   }
   return quote.changePercent > 0 ? 'up' : 'down';
 }
 
-export function statusBarText(args: { instrument: Instrument; quote?: Quote; stale?: boolean }): string {
-  const { instrument, quote, stale } = args;
+/** Tooltip price column: a halted instrument has a previous close but no current price. */
+export function quotePrice(quote: Quote | undefined): string {
+  return quote && !quote.halted ? formatPrice(quote.price, quote.market) : '--';
+}
+
+export interface StatusBarLabels {
+  halted?: string;
+}
+
+export function statusBarText(args: {
+  instrument: Instrument;
+  quote?: Quote;
+  stale?: boolean;
+  labels?: StatusBarLabels;
+}): string {
+  const { instrument, quote, stale, labels } = args;
   const icon = stale ? '$(warning)' : '$(graph)';
-  const body = quote
-    ? `${instrument.code} ${formatPrice(quote.price, quote.market)} ${formatChangePercent(quote.changePercent)}`
-    : `${instrument.code} --`;
-  return `${icon} ${body}`;
+  if (!quote) {
+    return `${icon} ${instrument.code} --`;
+  }
+  if (quote.halted) {
+    return `${icon} ${instrument.code} -- ${labels?.halted ?? 'Halted'}`;
+  }
+  return `${icon} ${instrument.code} ${formatPrice(quote.price, quote.market)} ${formatChangePercent(quote.changePercent)}`;
 }
 
 export interface TooltipRow {

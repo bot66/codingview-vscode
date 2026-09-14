@@ -42,18 +42,22 @@ export function parseTencentResponse(text: string, bySymbol: Map<string, Instrum
     }
     const price = toNumber(fields[3]);
     const prevClose = toNumber(fields[4]);
-    if (!isUsable(price) || !isUsable(prevClose)) {
+    if (!isUsable(prevClose)) {
       continue;
     }
+    // An unknown code comes back as a zero-priced stub without a previous close; a halted
+    // instrument keeps its previous close and only loses the price.
+    const halted = !isUsable(price);
     quotes.push({
       id: instrument.id,
       market: instrument.market,
       code: instrument.code,
       name: fields[1] || undefined,
-      price,
+      price: halted ? 0 : price,
       prevClose,
-      change: toNumber(fields[31]),
-      changePercent: toNumber(fields[32]),
+      change: halted ? undefined : toNumber(fields[31]),
+      changePercent: halted ? undefined : toNumber(fields[32]),
+      halted: halted ? true : undefined,
       currency: currencyFor(instrument.market, fields[35]),
       asOf: fields[30] || undefined,
       source: 'tencent',

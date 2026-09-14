@@ -67,6 +67,29 @@ describe('parseTencentResponse', () => {
     expect(quotes).toEqual([]);
   });
 
+  test('reports a halted instrument instead of dropping it', () => {
+    const maotai = parseInstrument('cn:600519');
+
+    const quotes = parseTencentResponse(fixture('tencent-halted-synthetic.txt'), symbolMap([['sh600519', maotai]]));
+
+    expect(quotes).toEqual([
+      {
+        id: 'cn:600519',
+        market: 'cn',
+        code: '600519',
+        name: '贵州茅台',
+        price: 0,
+        prevClose: 1275.16,
+        change: undefined,
+        changePercent: undefined,
+        halted: true,
+        currency: 'CNY',
+        asOf: '20260914161450',
+        source: 'tencent',
+      },
+    ]);
+  });
+
   test('parses a Hong Kong quote in HKD', () => {
     const tencent = parseInstrument('hk:700');
 

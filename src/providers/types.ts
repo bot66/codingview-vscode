@@ -17,6 +17,8 @@ export interface Quote {
   prevClose?: number;
   change?: number;
   changePercent?: number;
+  /** The instrument resolved but has no current price, for example a suspended share. */
+  halted?: boolean;
   currency?: string;
   asOf?: string;
   source: string;

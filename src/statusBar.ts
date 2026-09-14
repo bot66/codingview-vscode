@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import {
   directionOf,
   formatChangePercent,
-  formatPrice,
+  quotePrice,
   statusBarText,
   tooltipMarkdown,
   type TooltipRow,
@@ -205,7 +205,12 @@ export class StatusBarController implements vscode.Disposable {
     const instrument = this.instruments[Math.min(this.index, this.instruments.length - 1)];
     const quote = this.quotes.get(instrument.id);
     this.item.command = 'codingview.showList';
-    this.item.text = statusBarText({ instrument, quote, stale: this.stale });
+    this.item.text = statusBarText({
+      instrument,
+      quote,
+      stale: this.stale,
+      labels: { halted: vscode.l10n.t('Halted') },
+    });
     this.item.color = this.colorFor(quote);
     this.item.tooltip = this.tooltip();
   }
@@ -227,8 +232,8 @@ export class StatusBarController implements vscode.Disposable {
       return {
         id: instrument.id,
         name: quote?.name ?? '',
-        price: quote ? formatPrice(quote.price, instrument.market) : '--',
-        change: formatChangePercent(quote?.changePercent),
+        price: quotePrice(quote),
+        change: quote?.halted ? vscode.l10n.t('Halted') : formatChangePercent(quote?.changePercent),
       };
     });
     const updatedAt = [...this.quotes.values()]

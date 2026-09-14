@@ -80,7 +80,6 @@ test strategy, release process, decision log and roadmap.
 ## Known limitations
 
 - The watchlist is a flat symbol list; there is no holdings or profit/loss tracking.
-- Hong Kong listings are not supported yet.
 - Invalid symbols stay in the list and show `--` in the status bar.
 
 ## License

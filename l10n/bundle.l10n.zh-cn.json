@@ -9,6 +9,7 @@
   "Pick a symbol to remove": "选择要移除的标的",
   "No data": "无数据",
   "Quotes are stale": "行情已过期",
+  "Halted": "停牌",
   "Last error: {0}": "最近错误：{0}",
   "Updated {0}": "更新于 {0}",
   "Click to manage the watchlist": "点击管理关注列表",

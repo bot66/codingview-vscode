@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
 
-import { directionOf, formatChangePercent, formatPrice, statusBarText, tooltipMarkdown } from '../format';
+import {
+  directionOf,
+  formatChangePercent,
+  formatPrice,
+  quotePrice,
+  statusBarText,
+  tooltipMarkdown,
+} from '../format';
 import type { Instrument, Quote } from '../providers/types';
 
 const instrument: Instrument = { id: 'cn:600519', market: 'cn', code: '600519' };
@@ -63,6 +70,21 @@ describe('statusBarText', () => {
 
   test('shows a placeholder when the quote is missing', () => {
     expect(statusBarText({ instrument })).toBe('$(graph) 600519 --');
+  });
+
+  test('says a halted instrument has no price rather than showing 0.00', () => {
+    const halted = quote({ price: 0, change: undefined, changePercent: undefined, halted: true });
+
+    expect(statusBarText({ instrument, quote: halted })).toBe('$(graph) 600519 -- Halted');
+    expect(statusBarText({ instrument, quote: halted, labels: { halted: '停牌' } })).toBe('$(graph) 600519 -- 停牌');
+  });
+});
+
+describe('quotePrice', () => {
+  test('renders the last price, or a placeholder when there is none', () => {
+    expect(quotePrice(quote())).toBe('1277.96');
+    expect(quotePrice(undefined)).toBe('--');
+    expect(quotePrice(quote({ price: 0, halted: true }))).toBe('--');
   });
 });
 

@@ -51,12 +51,14 @@ plain Node.
 
 - One left-aligned item (`StatusBarAlignment.Left`, priority 100, name `CodingView`).
 - Text: `$(graph) 600519 1277.96 +0.22%`, `$(warning) …` when the last cycle was not clean, or
-  `$(graph) 600519 --` before the first quote. An empty watchlist shows a clickable
-  `$(graph) Add a symbol`.
+  `$(graph) 600519 --` before the first quote. A suspended instrument renders as
+  `$(graph) 600519 -- 停牌` from `Quote.halted`, so it is not confused with an unknown code. An empty
+  watchlist shows a clickable `$(graph) Add a symbol`.
 - Colour: `ThemeColor('charts.green')` when the change is positive, `charts.red` when negative,
   no colour when flat or when `colorByDirection` is false.
 - Tooltip: markdown table of every symbol with price, change percent and name, the newest provider
-  timestamp, and — when relevant — a stale marker and the last error.
+  timestamp, and — when relevant — a stale marker, the last error, a delayed-quote note and the
+  invalid entries with a command link to remove them.
 - Rotation runs on `setInterval`. The item's command is `codingview.showList`, or
   `codingview.addSymbol` while the watchlist is empty.
 

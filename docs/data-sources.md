@@ -47,8 +47,14 @@ v_sh600519="1~贵州茅台~600519~1277.96~1275.16~1277.27~…~20260914161450~2.8
 
 Unknown codes are not an HTTP error: the endpoint answers with a zero-priced stub (for example
 `Nasdaq Test Symbol`), which is why the parser requires `price > 0` and `prevClose > 0` before
-emitting a quote. A halted instrument that reports 0 is therefore indistinguishable from an
-unknown code and shows `--`.
+emitting a quote.
+
+A halted instrument reports `0.000` as well, but it keeps a real previous close. The parser uses
+that difference: no previous close means the code is unknown and the row is dropped, a previous
+close without a price means the instrument is suspended, and it is emitted as a quote with
+`halted: true`, `price: 0` and no change. The status bar then reads `600519 -- 停牌` (or `Halted`
+in English) instead of pretending the instrument does not exist. The heuristic is asserted by
+`src/test/fixtures/tencent-halted-synthetic.txt`, the real row with the price fields zeroed.
 
 Hong Kong rows (`hk00700`) keep the same field layout — index 3 is the price, 4 the previous close,
 30 the timestamp (`2026/09/14 16:08:10`), 31/32 the change and the change percent — and report the
@@ -80,6 +86,9 @@ Hong Kong rows use `rt_hk00700` and a third layout: English and Chinese names fi
 `open, prevClose, high, low, price, change, changePercent` (indexes 2–8), with the timestamp at
 indexes 17 and 18 and the currency fixed to `HKD`. The tooltip shows the Chinese name when the
 endpoint supplies one.
+
+Sina follows the same rule for suspended instruments: a payload with a zero price but a real
+previous close becomes a `halted: true` quote, and one with neither is skipped.
 
 ## Binance Vision
 
