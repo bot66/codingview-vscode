@@ -1,7 +1,8 @@
 # Roadmap
 
-The 0.1.0 limitations and every candidate follow-up that was on this page are now implemented. This
-file keeps the record of what shipped, plus the ideas that are still open.
+The 0.1.0 limitations and every candidate follow-up that was on this page are now implemented, so no
+milestone is outstanding. This file keeps the record of what shipped, the ideas that are
+deliberately not planned, and the limitations that remain.
 
 ## Shipped in 0.2.0
 
