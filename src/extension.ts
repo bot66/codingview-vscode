@@ -42,6 +42,12 @@ export function activate(context: vscode.ExtensionContext): void {
 
   controller.start();
   void readSecrets().then(() => controller.refreshNow());
+
+  if (context.extensionMode === vscode.ExtensionMode.Test) {
+    context.subscriptions.push(
+      vscode.commands.registerCommand('codingview.test.snapshot', () => controller.snapshot()),
+    );
+  }
 }
 
 export function deactivate(): void {

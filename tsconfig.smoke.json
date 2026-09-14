@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "rootDir": "test",
+    "outDir": "out-test",
+    "types": ["node", "mocha"],
+    "sourceMap": false
+  },
+  "include": ["test"]
+}

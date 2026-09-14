@@ -93,6 +93,19 @@ export class StatusBarController implements vscode.Disposable {
     return this.quotes.get(id);
   }
 
+  /**
+   * Current rendering, used by the extension-host smoke test: VS Code gives no API to read a
+   * status bar item, so the controller reports what it wrote.
+   */
+  snapshot(): { text: string; tooltip: string; pinnedText?: string } {
+    const tooltip = this.item.tooltip;
+    return {
+      text: this.item.text ?? '',
+      tooltip: typeof tooltip === 'string' ? tooltip : (tooltip?.value ?? ''),
+      pinnedText: this.pinnedInstrument ? this.pinnedItem.text : undefined,
+    };
+  }
+
   refreshNow(): void {
     this.scheduleRefresh(0);
   }
@@ -216,9 +229,11 @@ export class StatusBarController implements vscode.Disposable {
   private render(): void {
     if (this.instruments.length === 0) {
       this.item.text = `$(graph) ${vscode.l10n.t('Add a symbol')}`;
-      this.item.tooltip = vscode.l10n.t('Click to manage the watchlist');
       this.item.command = 'codingview.addSymbol';
       this.item.color = undefined;
+      // Keep the ignored-entry list reachable even when nothing parseable is left.
+      this.item.tooltip =
+        this.invalid.length > 0 ? this.tooltip() : vscode.l10n.t('Click to manage the watchlist');
     } else {
       const instrument = this.instruments[Math.min(this.index, this.instruments.length - 1)];
       this.item.command = 'codingview.showList';

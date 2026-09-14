@@ -1,6 +1,9 @@
 .vscode/**
 .github/**
 src/**
+test/**
+out-test/**
+.vscode-test/**
 scripts/**
 docs/**
 node_modules/**
@@ -11,4 +14,6 @@ AGENTS.md
 eslint.config.mjs
 vitest.config.ts
 tsconfig.json
+tsconfig.smoke.json
+.vscode-test.mjs
 esbuild.mjs

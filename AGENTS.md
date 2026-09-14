@@ -10,6 +10,7 @@ item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vi
 - `src/symbols.ts`, `src/format.ts`, `src/quoteService.ts` — pure logic: symbols, formatting, batching, timeouts, backoff.
 - `src/providers/` — one provider per source, behind the `QuoteProvider` interface in `types.ts`.
 - `src/test/` — Vitest specs and real fixtures under `fixtures/`.
+- `test/smoke/` — `@vscode/test-cli` specs that run in a real extension host (`npm run test:smoke`).
 - `scripts/generate-icon.mjs` regenerates `media/icon.png`; `l10n/` holds the zh-cn strings.
 - `docs/` — design documents; update the matching page when behaviour or commands change.
 
@@ -19,6 +20,7 @@ item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vi
 - `npm run watch` — incremental bundle; `F5` launches the Extension Development Host.
 - `npm run lint` — run ESLint across `src/`.
 - `npm test` / `npm run test:watch` — Vitest unit suite.
+- `npm run test:smoke` — compile and run the `@vscode/test-cli` suite in a real extension host.
 - `npm run verify:live` — live check against the real quote endpoints for one symbol per market.
 - `npm run package` — `vsce package --no-dependencies` (keep the flag: vsce's npm dependency probe returns an empty file list here).
 
@@ -34,8 +36,8 @@ testable logic out of modules that import `vscode`.
 Vitest runs over `src/test/**/*.test.ts`. Fixtures are real
 responses; Tencent and Sina answer in GBK, so decode with `TextDecoder('gbk')`. Cover parsers,
 exchange derivation, batching, timeouts, failover and backoff via an injected `httpGet` rather
-than mocks. `statusBar.ts`, `watchlist.ts` and `extension.ts` are checked by `npm run compile`
-plus a manual `F5` run.
+than mocks. `statusBar.ts`, `watchlist.ts` and `extension.ts` are checked by `npm run compile`, the
+extension-host smoke test and a manual `F5` run.
 
 ## Commit & Pull Request Guidelines
 

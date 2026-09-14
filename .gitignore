@@ -4,3 +4,4 @@ coverage/
 *.vsix
 *.tsbuildinfo
 .vscode-test/
+out-test/

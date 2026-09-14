@@ -46,10 +46,25 @@ npm run verify:live -- --provider=sina --timeout=20
 It exits non-zero only when a symbol stays unresolved, so a covered failover is reported without
 failing the run.
 
-## Not covered automatically
+## Extension-host smoke test
 
-`statusBar.ts`, `watchlist.ts` and `extension.ts` need a running editor, so they rely on
-`npm run compile` (strict type checking against `@types/vscode`) plus this manual checklist:
+`npm run test:smoke` compiles `test/smoke/**` with `tsconfig.smoke.json` and then runs
+`@vscode/test-cli` against a downloaded VS Code build. VS Code exposes no API to read a status bar
+item, so `StatusBarController.snapshot()` reports the text, the tooltip and the pinned text, and the
+controller registers a `codingview.test.snapshot` command **only** in `ExtensionMode.Test`. The
+suite asserts:
+
+1. the extension activates,
+2. every command listed in `contributes.commands` is registered,
+3. an empty watchlist renders `$(graph) Add a symbol`,
+4. adding `cn:600519` switches the item to that symbol without a network round trip,
+5. an invalid entry appears in the tooltip behind a `command:codingview.removeSymbolEntry` link,
+6. a pinned symbol leaves the rotation and renders in its own item.
+
+It is the only gate that needs a graphical session, so CI runs it under `xvfb-run`. Colours, rotation
+feel and the command flows still deserve the manual pass below.
+
+## Manual checklist
 
 1. `F5` with an empty `codingview.watchlist` → the item reads `Add a symbol` and opens the input box.
 2. Add `cn:600519` → a price and change percent appear within seconds.
@@ -58,6 +73,8 @@ failing the run.
 5. Break the network → the last prices stay visible behind `$(warning)`; the tooltip shows the error.
 6. Restore the network → the warning clears on the next cycle.
 7. Run **CodingView: Remove Symbol** → the entry disappears from the status bar and from settings.
+8. Run **CodingView: Set Holding** → the status bar shows the profit and the tooltip gains a P/L
+   column.
 
 ## Pitfalls
 

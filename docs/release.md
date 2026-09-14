@@ -10,6 +10,7 @@
 | `npm run lint` | ESLint 9 flat config with typescript-eslint over `src/` |
 | `npm test` | Vitest unit suite |
 | `npm run package` | `vsce package --no-dependencies` |
+| `npm run test:smoke` | compiles `test/smoke` and runs the extension-host suite (`xvfb-run` on Linux) |
 
 esbuild emits CommonJS for Node 18 with `vscode` marked external, minifies for builds, keeps a
 source map, and inlines every other dependency — so the `.vsix` needs no `node_modules`.
@@ -66,6 +67,14 @@ valuable addition before a public launch.
 2. `npm run compile` — bundle written, no type errors.
 3. `npm run package` — `.vsix` produced; confirm `extension/dist/extension.js` is inside it.
 4. `code --install-extension codingview-<version>.vsix` on a scratch profile, then add one symbol.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `master`/`main`, on pull requests and on demand:
+`npm ci`, `npm run lint`, `npm test`, `npm run compile`, `xvfb-run -a npm run test:smoke` and
+`npm run package`, then uploads the `.vsix` as an artifact. Node 22 is required there because
+`@vscode/test-cli` needs it; the bundle itself still targets Node 18, so the `.vsix` runs on the
+editor's own runtime.
 
 ## Troubleshooting
 
