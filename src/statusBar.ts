@@ -9,7 +9,7 @@ import {
   type TooltipRow,
 } from './format';
 import type { Instrument, Quote, QuoteProvider } from './providers/types';
-import { backoffSeconds, QuoteService } from './quoteService';
+import { backoffSeconds, ProviderHealth, QuoteService } from './quoteService';
 import { clampedSeconds, SETTINGS_DEFAULTS, SETTINGS_MINIMUMS, type SecondsSetting } from './settings';
 import { parseWatchlist } from './symbols';
 
@@ -19,6 +19,7 @@ export class StatusBarController implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
   private readonly disposables: vscode.Disposable[] = [];
   private readonly quotes = new Map<string, Quote>();
+  private readonly health = new ProviderHealth();
   private instruments: Instrument[] = [];
   private index = 0;
   private stale = false;
@@ -152,6 +153,7 @@ export class StatusBarController implements vscode.Disposable {
         providers: this.providers,
         providerMode: this.settings().get<string>('provider', 'auto'),
         timeoutMs: this.readSeconds('requestTimeoutSeconds') * 1000,
+        health: this.health,
       });
       const outcome = await service.refresh(this.instruments);
 
@@ -171,6 +173,9 @@ export class StatusBarController implements vscode.Disposable {
 
       if (outcome.providerErrors.length > 0) {
         this.output.appendLine(`Refresh failed: ${outcome.providerErrors.join('; ')}`);
+      }
+      if (outcome.skipped.length > 0) {
+        this.output.appendLine(`Skipping providers with a tripped circuit: ${outcome.skipped.join(', ')}`);
       }
       if (outcome.missing.length > 0) {
         this.output.appendLine(`No data for: ${outcome.missing.join(', ')}`);

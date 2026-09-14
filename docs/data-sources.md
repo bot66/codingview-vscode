@@ -92,6 +92,10 @@ derived from the quote-asset suffix of the pair (`USDT`, `USDC`, `FDUSD`, `TUSD`
   not stripped the way a browser would.
 - `query1.finance.yahoo.com` answered 429/403 during evaluation and is not used.
 
+`ProviderHealth` remembers consecutive failures per provider across refresh cycles: two in a row
+trips the circuit and the provider is skipped for the next three cycles before it is retried. That
+keeps an unreachable `qt.gtimg.cn` from costing one request timeout every minute.
+
 ## Alternative sources evaluated
 
 | Source | Result |

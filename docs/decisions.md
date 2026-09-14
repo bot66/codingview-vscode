@@ -68,3 +68,11 @@ is used, with UTF-8 as a fallback for runtimes built without full ICU. Rejected:
 Tencent answers one batched request for mixed A-share and US symbols with change percent included.
 Sina covers the same markets and one extra header, making it a cheap second attempt; live testing
 showed the fallback engaging when Tencent was unreachable.
+
+## Circuit breaker over parallel requests
+
+Two consecutive failures skip a provider for three refresh cycles. Rejected: firing every provider
+in parallel and racing them, which would multiply the request volume against unofficial endpoints
+and make "which source answered" non-deterministic, and rejected: doing nothing, which pays the
+request timeout again on every cycle while an endpoint is down. The cooldown is short enough that a
+provider coming back is picked up within a few minutes.

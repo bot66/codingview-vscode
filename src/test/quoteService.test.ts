@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { QuoteService, backoffSeconds } from '../quoteService';
+import { ProviderHealth, QuoteService, backoffSeconds } from '../quoteService';
 import type { Instrument, Market, Quote, QuoteProvider } from '../providers/types';
 
 function instrument(id: string, market: Market, code: string): Instrument {
@@ -40,6 +40,49 @@ describe('backoffSeconds', () => {
     expect(backoffSeconds(3)).toBe(240);
     expect(backoffSeconds(4)).toBe(300);
     expect(backoffSeconds(9)).toBe(300);
+  });
+});
+
+describe('ProviderHealth', () => {
+  test('allows every attempt while the provider keeps succeeding', () => {
+    const health = new ProviderHealth({ threshold: 2, cooldownCycles: 3 });
+
+    for (let cycle = 0; cycle < 5; cycle += 1) {
+      expect(health.shouldAttempt('tencent')).toBe(true);
+      health.recordSuccess('tencent');
+    }
+  });
+
+  test('skips a provider for the cooldown after repeated failures', () => {
+    const health = new ProviderHealth({ threshold: 2, cooldownCycles: 3 });
+    const attempts = Array.from({ length: 8 }, () => {
+      if (!health.shouldAttempt('tencent')) {
+        return false;
+      }
+      health.recordFailure('tencent');
+      return true;
+    });
+
+    expect(attempts).toEqual([true, true, false, false, false, true, false, false]);
+  });
+
+  test('keeps providers independent', () => {
+    const health = new ProviderHealth({ threshold: 1, cooldownCycles: 2 });
+
+    health.recordFailure('tencent');
+
+    expect(health.shouldAttempt('tencent')).toBe(false);
+    expect(health.shouldAttempt('sina')).toBe(true);
+  });
+
+  test('a success clears the failure count', () => {
+    const health = new ProviderHealth({ threshold: 2, cooldownCycles: 3 });
+
+    health.recordFailure('tencent');
+    health.recordSuccess('tencent');
+    health.recordFailure('tencent');
+
+    expect(health.shouldAttempt('tencent')).toBe(true);
   });
 });
 
@@ -158,5 +201,43 @@ describe('QuoteService.refresh', () => {
 
     expect(tencent.calls).toEqual([]);
     expect(outcome.quotes[0].source).toBe('sina');
+  });
+
+  test('skips a tripped provider and reports it as skipped', async () => {
+    const stocks = instrument('cn:600519', 'cn', '600519');
+    const failing = stubProvider('tencent', ['cn'], async () => {
+      throw new Error('socket hang up');
+    });
+    const backup = stubProvider('sina', ['cn'], async (instruments) =>
+      instruments.map((target) => quoteFor(target, 1276.5, 'sina')),
+    );
+    const health = new ProviderHealth({ threshold: 1, cooldownCycles: 2 });
+    const service = new QuoteService({ providers: [failing, backup], health });
+
+    const first = await service.refresh([stocks]);
+    const second = await service.refresh([stocks]);
+
+    expect(first.quotes[0].source).toBe('sina');
+    expect(first.skipped).toEqual([]);
+    expect(failing.calls).toHaveLength(1);
+    expect(second.quotes[0].source).toBe('sina');
+    expect(second.skipped).toEqual(['tencent']);
+    expect(failing.calls).toHaveLength(1);
+  });
+
+  test('retries a skipped provider once the cooldown elapses', async () => {
+    const stocks = instrument('cn:600519', 'cn', '600519');
+    const failing = stubProvider('tencent', ['cn'], async () => {
+      throw new Error('socket hang up');
+    });
+    const health = new ProviderHealth({ threshold: 1, cooldownCycles: 2 });
+    const service = new QuoteService({ providers: [failing], health });
+
+    await service.refresh([stocks]);
+    await service.refresh([stocks]);
+    await service.refresh([stocks]);
+    await service.refresh([stocks]);
+
+    expect(failing.calls).toHaveLength(2);
   });
 });

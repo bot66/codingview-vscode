@@ -35,10 +35,15 @@ plain Node.
    `codingview.requestTimeoutSeconds` timeout (8 s by default).
 4. A provider that throws is recorded in `providerErrors` and its instruments stay pending for the
    next provider. A provider that returns fewer quotes than requested also leaves the remainder
-   pending, so an unknown code is retried against the fallback source.
+   pending, so an unknown code is retried against the fallback source. A provider that answers with
+   nothing at all counts as a failure too.
 5. Arriving quotes merge into the controller's map; instruments that stay pending become `missing`
    and render as `--`.
-6. The next refresh is scheduled with `refreshIntervalSeconds` (60s default), or with
+6. `ProviderHealth` counts consecutive failures per provider and, after the second one, skips that
+   provider for three cycles (`PROVIDER_FAILURE_THRESHOLD`, `PROVIDER_COOLDOWN_CYCLES`). Any success
+   clears the counter. Skipped ids come back in `RefreshOutcome.skipped` and are logged, so an
+   unreachable Tencent host costs one timeout instead of one per minute.
+7. The next refresh is scheduled with `refreshIntervalSeconds` (60s default), or with
    `backoffSeconds(failures)` = 60 → 120 → 240 → 300 seconds when a cycle had errors or missing
    symbols. Both counters reset after a fully clean cycle.
 
