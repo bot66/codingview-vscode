@@ -3,7 +3,7 @@
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
   "version": "0.2.0",
-  "publisher": "tgc",
+  "publisher": "bot66",
   "license": "MIT",
   "icon": "media/icon.png",
   "engines": {
@@ -25,10 +25,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/tgc/codingview-vscode.git"
+    "url": "https://github.com/bot66/codingview-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/tgc/codingview-vscode/issues"
+    "url": "https://github.com/bot66/codingview-vscode/issues"
   },
   "main": "./dist/extension.js",
   "l10n": "./l10n",

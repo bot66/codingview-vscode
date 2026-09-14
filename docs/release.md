@@ -34,10 +34,10 @@ Prerequisites, all of which are user-owned accounts:
 
 1. An Azure DevOps organisation and a Personal Access Token with **Marketplace → Manage** scope.
 2. A publisher id created at the Marketplace management portal; `publisher` in `package.json` must
-   match it. The repository currently ships `tgc`, which is the name this project was developed
-   under — change it if the Marketplace publisher id differs.
-3. `repository.url` and `bugs.url` point at `github.com/tgc/codingview-vscode`; adjust both if the
-   project lives somewhere else, because the Marketplace listing links to them.
+   match it. The repository currently ships `bot66`, the account the GitHub repository lives under —
+   change it if the Marketplace publisher id differs.
+3. `repository.url` and `bugs.url` point at `github.com/bot66/codingview-vscode`, which the
+   Marketplace listing links to; adjust both if the project moves.
 
 Then:
 
