@@ -1,5 +1,7 @@
 # CodingView
 
+[![CI](https://github.com/bot66/codingview-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/bot66/codingview-vscode/actions/workflows/ci.yml)
+
 Live stock and cryptocurrency quotes in the VS Code status bar, so you can follow your portfolio
 without leaving the editor.
 
