@@ -45,11 +45,15 @@ suite('CodingView in the extension host', () => {
   suiteSetup(async () => {
     await setSetting('watchlist', []);
     await setSetting('pinnedSymbol', '');
+    // Keep the suite offline and deterministic: this provider serves crypto only, so the stock
+    // symbols below never get a live quote and always render their code.
+    await setSetting('provider', 'binance-vision');
   });
 
   suiteTeardown(async () => {
     await setSetting('watchlist', []);
     await setSetting('pinnedSymbol', '');
+    await setSetting('provider', undefined);
   });
 
   test('activates', async () => {

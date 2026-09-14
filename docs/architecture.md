@@ -54,15 +54,17 @@ plain Node.
   when `codingview.pinnedSymbol` parses, a second item at priority 101 that never rotates. The
   pinned symbol is fetched even when it is not in the watchlist and is removed from the rotation
   list, so it is never shown twice.
-- Text: `$(graph) 600519 1277.96 +0.22%`, `$(warning) …` when the last cycle was not clean, or
-  `$(graph) 600519 --` before the first quote. A suspended instrument renders as
-  `$(graph) 600519 -- 停牌` from `Quote.halted`, so it is not confused with an unknown code. An empty
-  watchlist shows a clickable `$(graph) Add a symbol`.
+- Text: `$(graph) 贵州茅台 1277.96 +0.22%` — the label is `Quote.name` when a quote carries one and
+  the configured code otherwise, so the item reads `$(graph) 600519 --` before the first quote and
+  `$(warning) …` when the last cycle was not clean. Crypto pairs have no display name, so Binance
+  Vision sets `name` to the pair. A suspended instrument renders as `$(graph) 贵州茅台 -- 停牌` from
+  `Quote.halted`, so it is not confused with an unknown code. An empty watchlist shows a clickable
+  `$(graph) Add a symbol`.
 - Colour: `ThemeColor('charts.green')` when the change is positive, `charts.red` when negative,
   no colour when flat or when `colorByDirection` is false.
-- Tooltip: markdown table of every symbol with price, change percent and name, the newest provider
-  timestamp, and — when relevant — a stale marker, the last error, a delayed-quote note and the
-  invalid entries with a command link to remove them.
+- Tooltip: markdown table of every symbol with price, change percent and name (the code again when a
+  quote has no name), the newest provider timestamp, and — when relevant — a stale marker, the last
+  error, a delayed-quote note and the invalid entries with a command link to remove them.
 - Rotation runs on `setInterval`. The item's command is `codingview.showList`, or
   `codingview.addSymbol` while the watchlist is empty.
 

@@ -50,6 +50,8 @@ export function parseBinanceVisionResponse(text: string, bySymbol: Map<string, I
       id: instrument.id,
       market: instrument.market,
       code: instrument.code,
+      // Crypto pairs have no display name, so the pair itself is the name the tooltip shows.
+      name: ticker.symbol,
       price,
       prevClose: toNumber(ticker.prevClosePrice),
       change: toNumber(ticker.priceChange),

@@ -64,6 +64,11 @@ suite asserts:
 It is the only gate that needs a graphical session, so CI runs it under `xvfb-run`. Colours, rotation
 feel and the command flows still deserve the manual pass below.
 
+The suite pins `codingview.provider` to `binance-vision` for its duration: that provider only serves
+crypto, so the stock symbols it uses never pick up a live quote and the rendered text stays
+deterministic (the item shows the code, not a provider name). Live rendering is covered by
+`npm run verify:live` and the unit tests instead.
+
 ## Manual checklist
 
 1. `F5` with an empty `codingview.watchlist` → the item reads `Add a symbol` and opens the input box.

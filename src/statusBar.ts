@@ -284,7 +284,7 @@ export class StatusBarController implements vscode.Disposable {
       const quote = this.quotes.get(instrument.id);
       return {
         id: instrument.id,
-        name: quote?.name ?? '',
+        name: quote?.name ?? (quote ? instrument.code : ''),
         price: quotePrice(quote),
         change: quote?.halted ? vscode.l10n.t('Halted') : formatChangePercent(quote?.changePercent),
         profit: quote ? this.profitText(quote, this.holdings.get(instrument.id), true) : undefined,

@@ -16,6 +16,13 @@ entry, as are `hk:700` and `hk:00700`. Invalid entries never break the extension
 logged to the output channel, listed in the status bar tooltip with their validation message and
 offered a **Remove** link that deletes that raw entry from the settings.
 
+The status bar item shows the name the provider reports for the current symbol — `cn:159605` renders
+as `中概互联网ETF广发` — and falls back to the code before the first quote arrives or when a provider
+has no name for the instrument. Crypto pairs are their own name, so `crypto:BTCUSDT` shows
+`BTCUSDT`. The canonical `market:CODE` stays in the first tooltip column and in the
+**CodingView: Show Watchlist** quick pick, which is how two instruments with similar names stay
+apart.
+
 ## Holdings
 
 An entry may be an object instead of a string to carry a position:

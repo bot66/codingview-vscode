@@ -62,8 +62,14 @@ describe('directionOf', () => {
 });
 
 describe('statusBarText', () => {
-  test('shows code, price and change percent', () => {
+  test('falls back to the code when the quote carries no name', () => {
     expect(statusBarText({ instrument, quote: quote() })).toBe('$(graph) 600519 1277.96 +0.22%');
+  });
+
+  test('shows the provider name instead of the code', () => {
+    expect(statusBarText({ instrument, quote: quote({ name: '贵州茅台' }) })).toBe(
+      '$(graph) 贵州茅台 1277.96 +0.22%',
+    );
   });
 
   test('marks stale quotes with a warning icon', () => {
@@ -85,6 +91,7 @@ describe('statusBarText', () => {
 
     expect(statusBarText({ instrument, quote: halted })).toBe('$(graph) 600519 -- Halted');
     expect(statusBarText({ instrument, quote: halted, labels: { halted: '停牌' } })).toBe('$(graph) 600519 -- 停牌');
+    expect(statusBarText({ instrument, quote: { ...halted, name: '贵州茅台' } })).toBe('$(graph) 贵州茅台 -- Halted');
   });
 });
 

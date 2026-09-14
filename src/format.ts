@@ -74,13 +74,15 @@ export function statusBarText(args: {
 }): string {
   const { instrument, quote, stale, profit, labels } = args;
   const icon = stale ? '$(warning)' : '$(graph)';
+  // The provider name is friendlier than the code; the code is the fallback until a quote arrives.
+  const label = quote?.name ?? instrument.code;
   if (!quote) {
-    return `${icon} ${instrument.code} --`;
+    return `${icon} ${label} --`;
   }
   if (quote.halted) {
-    return `${icon} ${instrument.code} -- ${labels?.halted ?? 'Halted'}`;
+    return `${icon} ${label} -- ${labels?.halted ?? 'Halted'}`;
   }
-  const head = `${icon} ${instrument.code} ${formatPrice(quote.price, quote.market)} ${formatChangePercent(quote.changePercent)}`;
+  const head = `${icon} ${label} ${formatPrice(quote.price, quote.market)} ${formatChangePercent(quote.changePercent)}`;
   return profit ? `${head} ${profit}` : head;
 }
 

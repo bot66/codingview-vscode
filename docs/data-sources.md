@@ -106,6 +106,9 @@ arrive as an object such as `{"code":-1121,"msg":"Invalid symbol."}` and are rai
 derived from the quote-asset suffix of the pair (`USDT`, `USDC`, `FDUSD`, `TUSD`, `BTC`, `ETH`,
 `BNB`, `EUR`, `TRY`).
 
+Crypto pairs have no display name, so the parser also sets `name` to the pair (`BTCUSDT`); the status
+bar and the tooltip then show something meaningful instead of an empty name column.
+
 ## Finnhub
 
 US quotes only, and only when the user stored a key with **CodingView: Set API Key**. The key lives

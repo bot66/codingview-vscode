@@ -60,8 +60,11 @@ uploads. Keep `CHANGELOG.md` current — it becomes the release notes.
 | `CHANGELOG.md` | Per-release notes |
 | `engines.vscode` | `^1.90.0`; raise it deliberately, it gates installation for older editors |
 
-Screenshots or a short GIF of the status bar are still missing from the README and are the most
-valuable addition before a public launch.
+`media/statusbar.png` and `media/rotation.gif` are captured from a real window with
+`npm run media` (see the script's header for the VS Code binary it needs), and the Marketplace page
+renders them from the packaged `.vsix` because both files are part of the package. Re-run the script
+after a rendering change: a host without a CJK font draws the Chinese instrument names as boxes,
+which is how the first attempt looked.
 
 ## Verification checklist
 
