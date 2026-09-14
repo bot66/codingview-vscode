@@ -2,8 +2,8 @@
   "name": "codingview",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.1.0",
-  "publisher": "your-publisher-id",
+  "version": "0.2.0",
+  "publisher": "tgc",
   "license": "MIT",
   "icon": "media/icon.png",
   "engines": {
@@ -25,10 +25,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-account/codingview-vscode.git"
+    "url": "https://github.com/tgc/codingview-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/your-account/codingview-vscode/issues"
+    "url": "https://github.com/tgc/codingview-vscode/issues"
   },
   "main": "./dist/extension.js",
   "l10n": "./l10n",
@@ -166,6 +166,7 @@
     "test:smoke": "npm run compile && tsc -p tsconfig.smoke.json && vscode-test --config .vscode-test.mjs",
     "test:watch": "vitest",
     "verify:live": "node scripts/verify-live.mjs",
+    "media": "node scripts/generate-screenshots.mjs",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --no-dependencies"
   },

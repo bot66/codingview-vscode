@@ -7,11 +7,13 @@ item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vi
 
 - `src/extension.ts` — activation, command registration, status bar lifecycle.
 - `src/statusBar.ts`, `src/watchlist.ts` — the VS Code facing layer; the only modules importing `vscode`.
-- `src/symbols.ts`, `src/format.ts`, `src/quoteService.ts` — pure logic: symbols, formatting, batching, timeouts, backoff.
+- `src/symbols.ts`, `src/format.ts`, `src/quoteService.ts`, `src/holdings.ts`, `src/settings.ts` — pure logic: symbols, formatting, holdings and profit/loss, batching, timeouts, backoff, setting defaults.
 - `src/providers/` — one provider per source, behind the `QuoteProvider` interface in `types.ts`.
 - `src/test/` — Vitest specs and real fixtures under `fixtures/`.
 - `test/smoke/` — `@vscode/test-cli` specs that run in a real extension host (`npm run test:smoke`).
-- `scripts/generate-icon.mjs` regenerates `media/icon.png`; `l10n/` holds the zh-cn strings.
+- `scripts/generate-icon.mjs` regenerates `media/icon.png`; `scripts/generate-screenshots.mjs`
+  regenerates `media/statusbar.png` and `media/rotation.gif` from a real window; `scripts/verify-live.mjs`
+  checks the real endpoints; `l10n/` holds the zh-cn strings.
 - `docs/` — design documents; update the matching page when behaviour or commands change.
 
 ## Build, Test, and Development Commands
@@ -50,4 +52,5 @@ the issue, list manual verification steps, and attach a screenshot or GIF for UI
 - Update this file in place when structure, commands or conventions change; do not delete it.
 - Add new sources behind `QuoteProvider`, keyless by default, backed by fixtures.
 - Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion.
+- Run `npm run test:smoke` after touching `statusBar.ts`, `extension.ts`, `watchlist.ts` or the manifest.
 - Never commit `dist/`, `node_modules/` or `*.vsix`; `.gitignore` covers them.

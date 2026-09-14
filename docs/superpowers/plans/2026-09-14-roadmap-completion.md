@@ -1,7 +1,7 @@
 # Roadmap Completion Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan
-> task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement every milestone listed in `docs/roadmap.md` — both the "Limitations today" and
 the "Candidate follow-ups" table — so the roadmap can be rewritten as shipped work.
@@ -44,14 +44,14 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
 - Produces: `QuoteServiceOptions.timeoutMs` (already exists) is now fed from
   `readSeconds('requestTimeoutSeconds', 8, 2) * 1000`.
 
-- [ ] **Step 1: Write the failing test** — custom `timeoutMs` aborts a hanging provider and the
+- [x] **Step 1: Write the failing test** — custom `timeoutMs` aborts a hanging provider and the
   fallback provider still answers (mirrors the existing 8 s timeout test with `timeoutMs: 50`).
-- [ ] **Step 2: Run `npx vitest run src/test/quoteService.test.ts`** — the new assertion fails or
+- [x] **Step 2: Run `npx vitest run src/test/quoteService.test.ts`** — the new assertion fails or
   passes for the wrong reason before the wiring exists.
-- [ ] **Step 3: Add the setting** to `package.json` (number, default `8`, minimum `2`, maximum `60`,
+- [x] **Step 3: Add the setting** to `package.json` (number, default `8`, minimum `2`, maximum `60`,
   `scope: window`) plus both NLS bundles, and read it in `statusBar.ts`.
-- [ ] **Step 4: Run `npm run lint && npm test && npm run compile`.**
-- [ ] **Step 5: Update docs** (`configuration.md` settings table, `architecture.md` refresh cycle,
+- [x] **Step 4: Run `npm run lint && npm test && npm run compile`.**
+- [x] **Step 5: Update docs** (`configuration.md` settings table, `architecture.md` refresh cycle,
   `README.md` settings table) and commit.
 
 ### Task 2: Provider circuit breaker
@@ -69,14 +69,14 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
 - Consumes: `QuoteServiceOptions.health?: ProviderHealth`.
 - `StatusBarController` owns one `ProviderHealth` instance for the lifetime of the item.
 
-- [ ] **Step 1: Write the failing tests** — (a) a provider that always throws is skipped after the
+- [x] **Step 1: Write the failing tests** — (a) a provider that always throws is skipped after the
   threshold and is not called again inside the cooldown window; (b) it is retried once the cooldown
   elapses; (c) a success resets the counter.
-- [ ] **Step 2: Run the spec, watch it fail.**
-- [ ] **Step 3: Implement `ProviderHealth`** and wire it through `QuoteService.candidates()` /
+- [x] **Step 2: Run the spec, watch it fail.**
+- [x] **Step 3: Implement `ProviderHealth`** and wire it through `QuoteService.candidates()` /
   `refresh()`; controller passes a shared instance and logs when a provider is skipped.
-- [ ] **Step 4: Run `npm run lint && npm test && npm run compile`.**
-- [ ] **Step 5: Update docs and commit** — this closes the "hanging provider costs one timeout per
+- [x] **Step 4: Run `npm run lint && npm test && npm run compile`.**
+- [x] **Step 5: Update docs and commit** — this closes the "hanging provider costs one timeout per
   cycle" limitation together with Task 1.
 
 ### Task 3: Hong Kong market
@@ -96,11 +96,11 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
   time, `fields[31]` change, `fields[32]` percent) and report `HKD`.
 - Sina HK rows are `nameEn,nameCn,open,prevClose,high,low,price,change,changePercent,…,date,time`.
 
-- [ ] **Step 1: Capture the real fixtures** from `qt.gtimg.cn/q=hk00700,hk09988,hk01810` and
+- [x] **Step 1: Capture the real fixtures** from `qt.gtimg.cn/q=hk00700,hk09988,hk01810` and
   `hq.sinajs.cn/list=rt_hk00700,…` (already fetched during planning).
-- [ ] **Step 2–4: TDD** — failing tests for grammar/padding/symbol building, then the parser tests,
+- [x] **Step 2–4: TDD** — failing tests for grammar/padding/symbol building, then the parser tests,
   then the implementation.
-- [ ] **Step 5–6: Update the `hk:00700` rejection table row, docs and commit.**
+- [x] **Step 5–6: Update the `hk:00700` rejection table row, docs and commit.**
 
 ### Task 4: Halted instruments are distinguishable
 
@@ -118,10 +118,10 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
 - `formatStatusBarText` renders `${code} -- (halted)` (localised label) and the tooltip change
   column shows "Halted" instead of a percent.
 
-- [ ] **Step 1: TDD** — failing parser test: the zero-priced "Nasdaq Test Symbol" stub is dropped,
+- [x] **Step 1: TDD** — failing parser test: the zero-priced "Nasdaq Test Symbol" stub is dropped,
   a zero price with a non-zero previous close yields `halted: true`.
-- [ ] **Step 2: Implement** in the parsers + `statusBarText` labels + tooltip row.
-- [ ] **Step 3: Run `npm run lint && npm test && npm run compile`, update docs, commit.**
+- [x] **Step 2: Implement** in the parsers + `statusBarText` labels + tooltip row.
+- [x] **Step 3: Run `npm run lint && npm test && npm run compile`, update docs, commit.**
 
 ### Task 5: Invalid-symbol feedback
 
@@ -139,10 +139,10 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
   `command:codingview.removeSymbolEntry?%5B%22<encoded entry>%22%5D`.
 - The tooltip `MarkdownString` sets `isTrusted = { enabledCommands: ['codingview.removeSymbolEntry'] }`.
 
-- [ ] **Step 1: TDD** — failing `format.test.ts` case asserting the invalid section renders the
+- [x] **Step 1: TDD** — failing `format.test.ts` case asserting the invalid section renders the
   entry, the reason and the command link.
-- [ ] **Step 2: Implement** format + controller + command + NLS + docs.
-- [ ] **Step 3: Run `npm run lint && npm test && npm run compile`, commit.**
+- [x] **Step 2: Implement** format + controller + command + NLS + docs.
+- [x] **Step 3: Run `npm run lint && npm test && npm run compile`, commit.**
 
 ### Task 6: Pinned second status bar item
 
@@ -159,9 +159,9 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
   clears the pin; writes `codingview.pinnedSymbol` in the user's scope.
 - The pinned item is a second `StatusBarItem` (priority 101) that shows the quote or `--`.
 
-- [ ] **Step 1: Implement the controller changes** (second item, rotation list, dispose).
-- [ ] **Step 2: Add the setting, command, NLS, docs.**
-- [ ] **Step 3: Run `npm run lint && npm test && npm run compile`, commit.**
+- [x] **Step 1: Implement the controller changes** (second item, rotation list, dispose).
+- [x] **Step 2: Add the setting, command, NLS, docs.**
+- [x] **Step 3: Run `npm run lint && npm test && npm run compile`, commit.**
 
 ### Task 7: Holdings and profit/loss
 
@@ -183,10 +183,10 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
 - Status bar appends the profit for the current symbol when a holding exists; the tooltip gains a
   P/L column.
 
-- [ ] **Step 1–3: TDD** `holdings.ts` and the entry parsing (string and object forms, invalid
+- [x] **Step 1–3: TDD** `holdings.ts` and the entry parsing (string and object forms, invalid
   quantity/cost rejected into `invalid`).
-- [ ] **Step 4: Wire the UI, NLS and docs.**
-- [ ] **Step 5: Run `npm run lint && npm test && npm run compile`, commit.**
+- [x] **Step 4: Wire the UI, NLS and docs.**
+- [x] **Step 5: Run `npm run lint && npm test && npm run compile`, commit.**
 
 ### Task 8: Keyed provider (Finnhub) and delay disclosure
 
@@ -208,9 +208,9 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
   synchronous; command `codingview.setApiKey` writes through `SecretStorage`.
 - Tooltip gains a note when a US quote is on screen: "US quotes may be delayed by the source."
 
-- [ ] **Step 1–3: TDD** the pure parser (happy path, `{c:0}` empty quote, error payload).
-- [ ] **Step 4: Wire the provider, secrets command, `coder` enum, NLS and docs.**
-- [ ] **Step 5: Run `npm run lint && npm test && npm run compile`, commit.**
+- [x] **Step 1–3: TDD** the pure parser (happy path, `{c:0}` empty quote, error payload).
+- [x] **Step 4: Wire the provider, secrets command, `coder` enum, NLS and docs.**
+- [x] **Step 5: Run `npm run lint && npm test && npm run compile`, commit.**
 
 ### Task 9: Extension-host smoke test and CI
 
@@ -226,10 +226,10 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
   the `Add a symbol` placeholder, and `codingview.addSymbol` exists in `contributes.commands`.
 - CI runs `npm ci`, `npm run lint`, `npm test`, `npm run compile` and `xvfb-run -a npm run test:smoke`.
 
-- [ ] **Step 1: Add the harness** and compile the smoke specs with a dedicated tsconfig.
-- [ ] **Step 2: Run the smoke test locally** (downloads VS Code; needs the Electron runtime libs).
+- [x] **Step 1: Add the harness** and compile the smoke specs with a dedicated tsconfig.
+- [x] **Step 2: Run the smoke test locally** (downloads VS Code; needs the Electron runtime libs).
   If the sandbox cannot launch Electron, record that and rely on the CI job.
-- [ ] **Step 3: Add the CI workflow, update `.vscodeignore`, docs and `AGENTS.md`, commit.**
+- [x] **Step 3: Add the CI workflow, update `.vscodeignore`, docs and `AGENTS.md`, commit.**
 
 ### Task 10: Marketplace polish
 
@@ -242,15 +242,15 @@ behaviour lands in the pure modules (`symbols.ts`, `format.ts`, `quoteService.ts
 - `node scripts/generate-screenshots.mjs` regenerates both images from the real fixture values so the
   README assets stay in sync with the code.
 
-- [ ] **Step 1: Write the renderer** (status bar mockup + 3-frame rotation GIF, pure Node PNG/GIF
+- [x] **Step 1: Write the renderer** (status bar mockup + 3-frame rotation GIF, pure Node PNG/GIF
   encoders like `scripts/generate-icon.mjs`).
-- [ ] **Step 2: Rewrite the README** as a listing page with the screenshots, quick start, symbol
+- [x] **Step 2: Rewrite the README** as a listing page with the screenshots, quick start, symbol
   table, settings, data sources, privacy and development sections.
-- [ ] **Step 3: Replace the publisher/repository/bugs placeholders and bump the version; add the
+- [x] **Step 3: Replace the publisher/repository/bugs placeholders and bump the version; add the
   CHANGELOG entry.**
-- [ ] **Step 4: Rewrite `docs/roadmap.md`** so shipped milestones move to a "Shipped" section, and
+- [x] **Step 4: Rewrite `docs/roadmap.md`** so shipped milestones move to a "Shipped" section, and
   update the acceptance-criteria table in `docs/overview.md`.
-- [ ] **Step 5: Run the full verification** (`npm run lint && npm test && npm run compile &&
+- [x] **Step 5: Run the full verification** (`npm run lint && npm test && npm run compile &&
   npm run package`) and commit.
 
 ---

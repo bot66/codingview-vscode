@@ -12,4 +12,4 @@ document and the implementation disagree, trust the code and fix the document.
 | [testing.md](testing.md) | Test strategy, coverage, manual F5 checklist |
 | [release.md](release.md) | Build pipeline, packaging, Marketplace publishing |
 | [decisions.md](decisions.md) | Decisions with the alternatives that were rejected |
-| [roadmap.md](roadmap.md) | Known limitations and candidate follow-ups |
+| [roadmap.md](roadmap.md) | What shipped, what is still open, known limitations |

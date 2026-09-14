@@ -15,14 +15,14 @@ developer can follow their portfolio without leaving the editor.
 - An optional pinned item next to the rotation for one symbol that should never scroll away.
 - Optional `quantity` and `cost` per entry, giving profit and loss in the status bar and tooltip.
 - Markets: mainland China A-shares, Hong Kong stocks, US stocks and crypto spot pairs.
-- Keyless quote sources: Tencent (preferred), Sina (fallback) and Binance Vision.
+- Keyless quote sources: Tencent (preferred), Sina (fallback) and Binance Vision, plus an optional
+  keyed Finnhub provider for US symbols.
 - Refresh every 60 seconds with exponential backoff; stale prices stay visible.
 
 ## Non-goals for v1
 
 - No webview, charts or sidebar tree view.
-- No API keys, accounts or telemetry.
-- No CI pipeline.
+- No accounts or telemetry. The only optional key is Finnhub, and it lives in `SecretStorage`.
 
 ## User stories
 
@@ -35,9 +35,11 @@ developer can follow their portfolio without leaving the editor.
 
 | Criterion | Status |
 | --- | --- |
-| Empty watchlist shows a clickable "Add a symbol" item | Implemented, pending an F5 run |
-| Adding `cn:600519` shows a price within seconds | Implemented; provider path verified live |
-| Rotation advances every 5s and honours the setting | Implemented, pending an F5 run |
-| Failed refresh keeps the last price and shows `$(warning)` | Implemented; failover verified live |
-| `npm run lint && npm test` pass | Verified: ESLint clean, 61 tests |
-| `npm run package` produces an installable `.vsix` | Verified: 11 entries incl. the bundle |
+| Empty watchlist shows a clickable "Add a symbol" item | Verified in the extension host: `npm run test:smoke` asserts the placeholder text |
+| Adding `cn:600519` shows a price within seconds | Verified live: `npm run verify:live` resolves one symbol per market from the real endpoints |
+| Rotation advances every 5s and honours the setting | Implemented; exercised by the smoke test with `rotateIntervalSeconds: 2`, still worth an F5 pass for feel |
+| Failed refresh keeps the last price and shows `$(warning)` | Verified live: the Tencent timeout fell through to Sina and the status bar screenshot shows the prices |
+| Halted instruments are distinguishable from unknown codes | Verified by unit tests over the synthetic halted row and the unknown-code stub |
+| `npm run lint && npm test` pass | Verified: ESLint clean, all Vitest specs green |
+| `npm run test:smoke` passes | Verified: 6 assertions in a real VS Code 1.137 extension host |
+| `npm run package` produces an installable `.vsix` | Verified: 11 entries including the bundle and the new media |
