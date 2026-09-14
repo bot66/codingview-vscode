@@ -1,8 +1,7 @@
 # Repository Guidelines
 
-`codingview-vscode` is a VS Code extension (engines `^1.90.0`) showing live stock and crypto
-quotes in a status bar item, driven by `codingview.*` settings and keyless Tencent, Sina and
-Binance Vision endpoints.
+`codingview-vscode` is a VS Code extension showing live stock and crypto quotes in a status bar
+item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vision endpoints.
 
 ## Project Structure & Module Organization
 
@@ -12,6 +11,7 @@ Binance Vision endpoints.
 - `src/providers/` — one provider per source, behind the `QuoteProvider` interface in `types.ts`.
 - `src/test/` — Vitest specs and real fixtures under `fixtures/`.
 - `scripts/generate-icon.mjs` regenerates `media/icon.png`; `l10n/` holds the zh-cn strings.
+- `docs/` — design documents; update the matching page when behaviour or commands change.
 
 ## Build, Test, and Development Commands
 
@@ -30,7 +30,7 @@ testable logic out of modules that import `vscode`.
 
 ## Testing Guidelines
 
-Vitest runs in the node environment over `src/test/**/*.test.ts`. Fixtures are copied from real
+Vitest runs over `src/test/**/*.test.ts`. Fixtures are real
 responses; Tencent and Sina answer in GBK, so decode with `TextDecoder('gbk')`. Cover parsers,
 exchange derivation, batching, timeouts, failover and backoff via an injected `httpGet` rather
 than mocks. `statusBar.ts`, `watchlist.ts` and `extension.ts` are checked by `npm run compile`
@@ -46,5 +46,5 @@ the issue, list manual verification steps, and attach a screenshot or GIF for UI
 
 - Update this file in place when structure, commands or conventions change; do not delete it.
 - Add new sources behind `QuoteProvider`, keyless by default, backed by fixtures.
-- Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion; say which providers you exercised.
+- Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion.
 - Never commit `dist/`, `node_modules/` or `*.vsix`; `.gitignore` covers them.

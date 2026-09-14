@@ -69,6 +69,11 @@ npm run package   # produce a .vsix with vsce
 Press `F5` to launch the Extension Development Host. `scripts/generate-icon.mjs` regenerates
 `media/icon.png` when the artwork needs to change.
 
+## Design documents
+
+See [`docs/`](docs/README.md) for the architecture, data-source details, configuration reference,
+test strategy, release process, decision log and roadmap.
+
 ## Known limitations
 
 - The watchlist is a flat symbol list; there is no holdings or profit/loss tracking.
