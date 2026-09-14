@@ -32,7 +32,7 @@ describe('parseBinanceVisionResponse', () => {
         id: 'crypto:BTCUSDT',
         market: 'crypto',
         code: 'BTCUSDT',
-        name: 'BTCUSDT',
+        name: 'BTC',
         price: 78372.01,
         prevClose: 77202.76,
         change: 1169.25,
@@ -44,7 +44,7 @@ describe('parseBinanceVisionResponse', () => {
         id: 'crypto:ETHUSDT',
         market: 'crypto',
         code: 'ETHUSDT',
-        name: 'ETHUSDT',
+        name: 'ETH',
         price: 2498.78,
         prevClose: 2493.35,
         change: 5.43,
@@ -68,6 +68,25 @@ describe('parseBinanceVisionResponse', () => {
     );
 
     expect(quotes).toEqual([]);
+  });
+
+  test('names the base asset of the pair', () => {
+    const pairs = ['ETHBTC', 'BTCEUR', 'SOLBNB', 'BTCFDUSD'];
+    const payload = JSON.stringify(
+      pairs.map((symbol) => ({ symbol, lastPrice: '2.0', priceChange: '0.1', priceChangePercent: '0.5' })),
+    );
+
+    const quotes = parseBinanceVisionResponse(
+      payload,
+      symbolMap(pairs.map((symbol) => [symbol, parseInstrument(`crypto:${symbol}`)])),
+    );
+
+    expect(quotes.map((quote) => [quote.code, quote.name])).toEqual([
+      ['ETHBTC', 'ETH'],
+      ['BTCEUR', 'BTC'],
+      ['SOLBNB', 'SOL'],
+      ['BTCFDUSD', 'BTC'],
+    ]);
   });
 });
 

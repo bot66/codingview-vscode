@@ -66,9 +66,9 @@ describe('statusBarText', () => {
     expect(statusBarText({ instrument, quote: quote() })).toBe('$(graph) 600519 1277.96 +0.22%');
   });
 
-  test('shows the provider name instead of the code', () => {
+  test('shows the provider name in front of the code', () => {
     expect(statusBarText({ instrument, quote: quote({ name: '贵州茅台' }) })).toBe(
-      '$(graph) 贵州茅台 1277.96 +0.22%',
+      '$(graph) 贵州茅台 600519 1277.96 +0.22%',
     );
   });
 
@@ -91,7 +91,9 @@ describe('statusBarText', () => {
 
     expect(statusBarText({ instrument, quote: halted })).toBe('$(graph) 600519 -- Halted');
     expect(statusBarText({ instrument, quote: halted, labels: { halted: '停牌' } })).toBe('$(graph) 600519 -- 停牌');
-    expect(statusBarText({ instrument, quote: { ...halted, name: '贵州茅台' } })).toBe('$(graph) 贵州茅台 -- Halted');
+    expect(statusBarText({ instrument, quote: { ...halted, name: '贵州茅台' } })).toBe(
+      '$(graph) 贵州茅台 600519 -- Halted',
+    );
   });
 });
 

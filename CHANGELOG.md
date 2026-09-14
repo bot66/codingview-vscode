@@ -8,6 +8,8 @@
   `P/L` column in the tooltip.
 - Optional keyed US source: **CodingView: Set API Key** stores a Finnhub key in `SecretStorage`.
 - Suspended instruments render as `Halted` instead of being confused with unknown codes.
+- Status bar labels read `name code price change`; crypto pairs use the base asset as the name, so
+  `crypto:BTCUSDT` reads `BTC BTCUSDT`.
 - Ignored entries are listed in the tooltip with a **Remove** link.
 - Configurable request timeout, plus a circuit breaker that skips a source failing twice in a row.
 - US delay disclosure in the tooltip.

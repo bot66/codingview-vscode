@@ -6,8 +6,7 @@ without leaving the editor.
 ![Two CodingView items in the status bar: a pinned Hong Kong quote and the rotating A-share with its profit](media/statusbar.png)
 
 *Captured from a development build: `hk:00700` is pinned, `cn:600519` rotates in with its profit and
-loss because the entry carries a quantity and a cost. Each item shows the provider's name for the
-symbol rather than its code.*
+loss because the entry carries a quantity and a cost. Each item reads `name code price change`.*
 
 ![The rotating item switching between two symbols](media/rotation.gif)
 

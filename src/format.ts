@@ -74,8 +74,9 @@ export function statusBarText(args: {
 }): string {
   const { instrument, quote, stale, profit, labels } = args;
   const icon = stale ? '$(warning)' : '$(graph)';
-  // The provider name is friendlier than the code; the code is the fallback until a quote arrives.
-  const label = quote?.name ?? instrument.code;
+  // `name code`, so the item is readable while the code still says which listing it is. Until a
+  // quote arrives there is no name to show, and the code stands alone.
+  const label = quote?.name ? `${quote.name} ${instrument.code}` : instrument.code;
   if (!quote) {
     return `${icon} ${label} --`;
   }

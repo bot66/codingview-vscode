@@ -106,8 +106,9 @@ arrive as an object such as `{"code":-1121,"msg":"Invalid symbol."}` and are rai
 derived from the quote-asset suffix of the pair (`USDT`, `USDC`, `FDUSD`, `TUSD`, `BTC`, `ETH`,
 `BNB`, `EUR`, `TRY`).
 
-Crypto pairs have no display name, so the parser also sets `name` to the pair (`BTCUSDT`); the status
-bar and the tooltip then show something meaningful instead of an empty name column.
+Crypto pairs have no display name, so the parser sets `name` to the base asset — `BTCUSDT` becomes
+`BTC`, `ETHBTC` becomes `ETH` — by stripping the quote asset suffix, and the status bar then reads
+`BTC BTCUSDT 78494.01 +1.73%` while the tooltip keeps `crypto:BTCUSDT` in its identifier column.
 
 ## Finnhub
 

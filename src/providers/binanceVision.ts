@@ -26,6 +26,12 @@ function quoteAsset(pair: string): string | undefined {
   return QUOTE_ASSETS.find((asset) => pair.endsWith(asset));
 }
 
+/** `BTCUSDT` and `ETHBTC` are traded in `BTC` and `ETH`; the pair itself stays the code. */
+export function baseAsset(pair: string): string {
+  const quote = quoteAsset(pair);
+  return quote && quote.length < pair.length ? pair.slice(0, -quote.length) : pair;
+}
+
 export function parseBinanceVisionResponse(text: string, bySymbol: Map<string, Instrument>): Quote[] {
   const payload: unknown = JSON.parse(text);
   if (!Array.isArray(payload)) {
@@ -50,8 +56,8 @@ export function parseBinanceVisionResponse(text: string, bySymbol: Map<string, I
       id: instrument.id,
       market: instrument.market,
       code: instrument.code,
-      // Crypto pairs have no display name, so the pair itself is the name the tooltip shows.
-      name: ticker.symbol,
+      // Crypto pairs have no display name, so the base asset plays that role.
+      name: baseAsset(ticker.symbol),
       price,
       prevClose: toNumber(ticker.prevClosePrice),
       change: toNumber(ticker.priceChange),

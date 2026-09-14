@@ -54,10 +54,11 @@ plain Node.
   when `codingview.pinnedSymbol` parses, a second item at priority 101 that never rotates. The
   pinned symbol is fetched even when it is not in the watchlist and is removed from the rotation
   list, so it is never shown twice.
-- Text: `$(graph) 贵州茅台 1277.96 +0.22%` — the label is `Quote.name` when a quote carries one and
-  the configured code otherwise, so the item reads `$(graph) 600519 --` before the first quote and
-  `$(warning) …` when the last cycle was not clean. Crypto pairs have no display name, so Binance
-  Vision sets `name` to the pair. A suspended instrument renders as `$(graph) 贵州茅台 -- 停牌` from
+- Text: `$(graph) 贵州茅台 600519 1277.96 +0.22%` — `Quote.name` in front of the configured code, so
+  the item stays readable while the code still identifies the listing. Before the first quote there
+  is no name, and the item reads `$(graph) 600519 --`; a cycle that was not clean prefixes
+  `$(warning)`. Crypto pairs have no display name, so Binance Vision uses the base asset (`BTC
+  BTCUSDT 78494.01 +1.73%`). A suspended instrument renders as `$(graph) 贵州茅台 600519 -- 停牌` from
   `Quote.halted`, so it is not confused with an unknown code. An empty watchlist shows a clickable
   `$(graph) Add a symbol`.
 - Colour: `ThemeColor('charts.green')` when the change is positive, `charts.red` when negative,
