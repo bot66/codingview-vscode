@@ -23,12 +23,19 @@ loss because the entry carries a quantity and a cost. Each item reads `name code
 - **Stale-aware**: keep the last price behind a `$(warning)` marker, with failover between sources
   and backoff on repeated failures.
 
-## Quick start
+## Install
 
-1. Install the extension (`F5` in this repository, or `code --install-extension codingview-0.2.0.vsix`).
-2. Run **CodingView: Add Symbol** from the command palette and enter a symbol such as `cn:600519`.
-3. The status bar starts rotating through the watchlist every 5 seconds and refreshes prices every
-   60 seconds.
+Install **CodingView** from the Visual Studio Marketplace — search for *CodingView* in the Extensions
+view, or run:
+
+```bash
+code --install-extension bot66.codingview
+```
+
+Then run **CodingView: Add Symbol** from the command palette and enter a symbol such as `cn:600519`.
+The status bar starts rotating through the watchlist every 5 seconds and refreshes prices every 60
+seconds. To try an unreleased build instead, run `npm run package` and install the resulting `.vsix`,
+or press `F5` inside this repository.
 
 ## Symbols
 
