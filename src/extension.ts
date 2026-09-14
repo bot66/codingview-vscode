@@ -4,7 +4,7 @@ import { formatChangePercent, formatPrice } from './format';
 import { createDefaultProviders } from './providers';
 import { StatusBarController } from './statusBar';
 import { parseInstrument } from './symbols';
-import { addSymbol, readWatchlist, removeSymbol, removeSymbolEntry } from './watchlist';
+import { addSymbol, pinSymbol, readWatchlist, removeSymbol, removeSymbolEntry } from './watchlist';
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('CodingView');
@@ -16,6 +16,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('codingview.addSymbol', () => addSymbol()),
     vscode.commands.registerCommand('codingview.removeSymbol', () => removeSymbol()),
     vscode.commands.registerCommand('codingview.removeSymbolEntry', (entry: string) => removeSymbolEntry(entry)),
+    vscode.commands.registerCommand('codingview.pinSymbol', () => pinSymbol()),
     vscode.commands.registerCommand('codingview.refreshNow', () => controller.refreshNow()),
     vscode.commands.registerCommand('codingview.nextSymbol', () => controller.next()),
     vscode.commands.registerCommand('codingview.showList', () => showList(controller)),

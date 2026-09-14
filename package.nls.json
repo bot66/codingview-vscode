@@ -6,10 +6,12 @@
   "command.refreshNow": "CodingView: Refresh Now",
   "command.showList": "CodingView: Show Watchlist",
   "command.nextSymbol": "CodingView: Next Symbol",
+  "command.pinSymbol": "CodingView: Pin Symbol",
   "config.watchlist": "Symbols shown in the status bar. Use `cn:600519`, `hk:00700`, `us:AAPL` or `crypto:BTCUSDT`.",
   "config.refreshIntervalSeconds": "How often quotes are fetched, in seconds (minimum 15).",
   "config.rotateIntervalSeconds": "How often the status bar switches to the next symbol, in seconds (minimum 2).",
   "config.requestTimeoutSeconds": "How long to wait for a quote provider before failing over, in seconds (minimum 2, maximum 60).",
+  "config.pinnedSymbol": "A symbol that stays in its own status bar item instead of rotating, for example `cn:600519`. Empty means no pin.",
   "config.colorByDirection": "Color the status bar item green when the current symbol is up and red when it is down.",
   "config.provider": "Quote source. `auto` tries tencent, then sina for stocks, and binance-vision for crypto."
 }

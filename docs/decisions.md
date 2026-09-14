@@ -9,6 +9,14 @@ layout guarantee and a large list floods the bar), a sidebar tree view, and a we
 charts — both add UI surface far beyond the "glance while coding" goal. A single item also makes
 colour-coding meaningful.
 
+## One optional pinned item next to the rotation
+
+`codingview.pinnedSymbol` puts a second item to the right of the rotating one, and the pinned symbol
+leaves the rotation so it is never duplicated. Rejected: two rotating items (two timers and two
+settings to keep in sync) and replacing the rotation whenever a pin is set, which would lose the
+reason the extension rotates in the first place. The bar therefore gains at most one extra item, so
+a long watchlist still cannot flood it.
+
 ## Keyless sources as the default
 
 Tencent, Sina and Binance Vision need no account, so the extension works on install with no

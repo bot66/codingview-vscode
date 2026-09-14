@@ -31,6 +31,7 @@ Every entry uses an explicit market prefix:
 | `CodingView: Refresh Now` | Fetches quotes immediately |
 | `CodingView: Show Watchlist` | Lists every symbol with its price; picking one rotates the status bar to it |
 | `CodingView: Next Symbol` | Advances the rotation manually |
+| `CodingView: Pin Symbol` | Keeps one symbol in its own status bar item, next to the rotation |
 
 ## Settings
 
@@ -42,6 +43,7 @@ Every entry uses an explicit market prefix:
 | `codingview.requestTimeoutSeconds` | `8` | Provider request timeout before failover, 2–60 |
 | `codingview.colorByDirection` | `true` | Green when up, red when down |
 | `codingview.provider` | `auto` | `auto`, `tencent`, `sina` or `binance-vision` |
+| `codingview.pinnedSymbol` | `''` | A symbol that stays visible instead of rotating |
 
 `auto` tries Tencent first, falls back to Sina for stocks, and uses Binance Vision for crypto.
 Failures back off at 60, 120, 240 and then 300 seconds while keeping the last known prices on screen.

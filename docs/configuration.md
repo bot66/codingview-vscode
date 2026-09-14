@@ -37,6 +37,7 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.refreshNow` | Schedules an immediate refresh |
 | `codingview.showList` | Quick pick of every symbol with its quote; picking one rotates to it |
 | `codingview.nextSymbol` | Advances the rotation |
+| `codingview.pinSymbol` | Prompts for the pinned symbol; an empty answer unpins |
 | `codingview.removeSymbolEntry` | Removes one raw watchlist entry; invoked from the tooltip's **Remove** link, not from the palette |
 
 ## Settings
@@ -49,6 +50,7 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.requestTimeoutSeconds` | number | `8` | Minimum 2, maximum 60 |
 | `codingview.colorByDirection` | boolean | `true` | Green up, red down |
 | `codingview.provider` | string | `auto` | `auto`, `tencent`, `sina`, `binance-vision` |
+| `codingview.pinnedSymbol` | string | `''` | One entry that never rotates; empty means unpinned |
 
 All settings use `scope: window`, so a folder can override the list for one workspace.
 `codingview.provider: auto` walks Tencent, then Sina, then Binance Vision; a pinned id restricts

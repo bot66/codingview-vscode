@@ -56,6 +56,10 @@
       {
         "command": "codingview.nextSymbol",
         "title": "%command.nextSymbol%"
+      },
+      {
+        "command": "codingview.pinSymbol",
+        "title": "%command.pinSymbol%"
       }
     ],
     "configuration": {
@@ -91,6 +95,12 @@
           "maximum": 60,
           "scope": "window",
           "description": "%config.requestTimeoutSeconds%"
+        },
+        "codingview.pinnedSymbol": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "markdownDescription": "%config.pinnedSymbol%"
         },
         "codingview.colorByDirection": {
           "type": "boolean",

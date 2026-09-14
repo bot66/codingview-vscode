@@ -69,15 +69,28 @@ export interface InvalidEntry {
   reason: string;
 }
 
-export function parseWatchlist(entries: readonly string[]): { instruments: Instrument[]; invalid: InvalidEntry[] } {
+export interface ParsedWatchlist {
+  /** Watchlist instruments in configuration order, without the pinned one. */
+  instruments: Instrument[];
+  /** The `codingview.pinnedSymbol` instrument, when it parses. */
+  pinned?: Instrument;
+  invalid: InvalidEntry[];
+}
+
+export function parseWatchlist(entries: readonly string[], pinnedEntry = ''): ParsedWatchlist {
   const instruments: Instrument[] = [];
   const invalid: InvalidEntry[] = [];
   const seen = new Set<string>();
+  const pinned = parseOptionalInstrument(pinnedEntry, invalid);
+
+  if (pinned) {
+    seen.add(pinned.id);
+  }
 
   for (const entry of entries) {
     try {
       const instrument = parseInstrument(entry);
-      if (seen.has(instrument.id)) {
+      if (seen.has(instrument.id) || pinned?.id === instrument.id) {
         continue;
       }
       seen.add(instrument.id);
@@ -87,7 +100,20 @@ export function parseWatchlist(entries: readonly string[]): { instruments: Instr
     }
   }
 
-  return { instruments, invalid };
+  return { instruments, pinned, invalid };
+}
+
+/** The pinned setting is a single entry; a blank value means "not pinned". */
+function parseOptionalInstrument(entry: string, invalid: InvalidEntry[]): Instrument | undefined {
+  if (entry.trim().length === 0) {
+    return undefined;
+  }
+  try {
+    return parseInstrument(entry);
+  } catch (error) {
+    invalid.push({ entry, reason: error instanceof Error ? error.message : String(error) });
+    return undefined;
+  }
 }
 
 /**

@@ -19,10 +19,12 @@ const REMOVE_ENTRY_COMMAND = 'codingview.removeSymbolEntry';
 
 export class StatusBarController implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
+  private readonly pinnedItem: vscode.StatusBarItem;
   private readonly disposables: vscode.Disposable[] = [];
   private readonly quotes = new Map<string, Quote>();
   private readonly health = new ProviderHealth();
   private instruments: Instrument[] = [];
+  private pinnedInstrument?: Instrument;
   private invalid: InvalidEntry[] = [];
   private index = 0;
   private stale = false;
@@ -39,6 +41,9 @@ export class StatusBarController implements vscode.Disposable {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     this.item.name = 'CodingView';
     this.item.command = 'codingview.showList';
+    this.pinnedItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 101);
+    this.pinnedItem.name = 'CodingView pinned';
+    this.pinnedItem.command = 'codingview.showList';
   }
 
   start(): void {
@@ -57,6 +62,7 @@ export class StatusBarController implements vscode.Disposable {
   dispose(): void {
     this.clearTimers();
     this.item.dispose();
+    this.pinnedItem.dispose();
     for (const disposable of this.disposables) {
       disposable.dispose();
     }
@@ -108,14 +114,19 @@ export class StatusBarController implements vscode.Disposable {
   }
 
   private reload(): void {
-    const { instruments, invalid } = parseWatchlist(this.settings().get<string[]>('watchlist', []));
+    const { instruments, pinned, invalid } = parseWatchlist(
+      this.settings().get<string[]>('watchlist', []),
+      this.settings().get<string>('pinnedSymbol', ''),
+    );
     this.instruments = instruments;
+    this.pinnedInstrument = pinned;
     this.invalid = invalid;
     if (this.index >= instruments.length) {
       this.index = 0;
     }
+    const wanted = new Set(this.refreshTargets().map((instrument) => instrument.id));
     for (const id of [...this.quotes.keys()]) {
-      if (!instruments.some((instrument) => instrument.id === id)) {
+      if (!wanted.has(id)) {
         this.quotes.delete(id);
       }
     }
@@ -146,7 +157,8 @@ export class StatusBarController implements vscode.Disposable {
     }
 
     const refreshMs = this.readSeconds('refreshIntervalSeconds') * 1000;
-    if (this.instruments.length === 0) {
+    const targets = this.refreshTargets();
+    if (targets.length === 0) {
       this.scheduleRefresh(refreshMs);
       return;
     }
@@ -159,7 +171,7 @@ export class StatusBarController implements vscode.Disposable {
         timeoutMs: this.readSeconds('requestTimeoutSeconds') * 1000,
         health: this.health,
       });
-      const outcome = await service.refresh(this.instruments);
+      const outcome = await service.refresh(targets);
 
       for (const quote of outcome.quotes) {
         this.quotes.set(quote.id, quote);
@@ -203,20 +215,36 @@ export class StatusBarController implements vscode.Disposable {
       this.item.tooltip = vscode.l10n.t('Click to manage the watchlist');
       this.item.command = 'codingview.addSymbol';
       this.item.color = undefined;
-      return;
+    } else {
+      const instrument = this.instruments[Math.min(this.index, this.instruments.length - 1)];
+      this.item.command = 'codingview.showList';
+      this.decorate(this.item, instrument);
     }
 
-    const instrument = this.instruments[Math.min(this.index, this.instruments.length - 1)];
+    if (!this.pinnedInstrument) {
+      this.pinnedItem.hide();
+      return;
+    }
+    this.pinnedItem.command = 'codingview.showList';
+    this.decorate(this.pinnedItem, this.pinnedInstrument);
+    this.pinnedItem.show();
+  }
+
+  /** Instruments the cycle has to resolve: the pinned one first, then the rotation. */
+  private refreshTargets(): Instrument[] {
+    return this.pinnedInstrument ? [this.pinnedInstrument, ...this.instruments] : [...this.instruments];
+  }
+
+  private decorate(item: vscode.StatusBarItem, instrument: Instrument): void {
     const quote = this.quotes.get(instrument.id);
-    this.item.command = 'codingview.showList';
-    this.item.text = statusBarText({
+    item.text = statusBarText({
       instrument,
       quote,
       stale: this.stale,
       labels: { halted: vscode.l10n.t('Halted') },
     });
-    this.item.color = this.colorFor(quote);
-    this.item.tooltip = this.tooltip();
+    item.color = this.colorFor(quote);
+    item.tooltip = this.tooltip();
   }
 
   private colorFor(quote: Quote | undefined): vscode.ThemeColor | undefined {

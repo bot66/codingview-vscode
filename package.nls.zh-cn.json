@@ -6,10 +6,12 @@
   "command.refreshNow": "CodingView: 立即刷新",
   "command.showList": "CodingView: 查看关注列表",
   "command.nextSymbol": "CodingView: 下一个标的",
+  "command.pinSymbol": "CodingView: 固定标的",
   "config.watchlist": "状态栏中显示的标的。写法：`cn:600519`、`hk:00700`、`us:AAPL`、`crypto:BTCUSDT`。",
   "config.refreshIntervalSeconds": "行情拉取间隔（秒，最小 15）。",
   "config.rotateIntervalSeconds": "状态栏轮播间隔（秒，最小 2）。",
   "config.requestTimeoutSeconds": "单个行情源的请求超时（秒，最小 2，最大 60），超时后切换到下一个行情源。",
+  "config.pinnedSymbol": "始终单独显示在状态栏、不参与轮播的标的，例如 `cn:600519`；留空表示不固定。",
   "config.colorByDirection": "当前标的上涨时状态栏显示绿色、下跌时显示红色。",
   "config.provider": "行情源。`auto` 会先试腾讯，股票失败后退到新浪，加密货币走 binance-vision。"
 }

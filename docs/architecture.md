@@ -49,7 +49,10 @@ plain Node.
 
 ## Rendering
 
-- One left-aligned item (`StatusBarAlignment.Left`, priority 100, name `CodingView`).
+- One left-aligned rotating item (`StatusBarAlignment.Left`, priority 100, name `CodingView`) plus,
+  when `codingview.pinnedSymbol` parses, a second item at priority 101 that never rotates. The
+  pinned symbol is fetched even when it is not in the watchlist and is removed from the rotation
+  list, so it is never shown twice.
 - Text: `$(graph) 600519 1277.96 +0.22%`, `$(warning) …` when the last cycle was not clean, or
   `$(graph) 600519 --` before the first quote. A suspended instrument renders as
   `$(graph) 600519 -- 停牌` from `Quote.halted`, so it is not confused with an unknown code. An empty

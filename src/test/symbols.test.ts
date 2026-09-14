@@ -52,6 +52,36 @@ describe('parseWatchlist', () => {
     expect(instruments.map((instrument) => instrument.id)).toEqual(['cn:600519', 'us:AAPL']);
     expect(invalid).toEqual([{ entry: '600519', reason: expect.stringContaining('Missing market prefix') }]);
   });
+
+  test('keeps the pinned symbol out of the rotating list', () => {
+    const result = parseWatchlist(['cn:600519', 'us:AAPL'], 'us:AAPL');
+
+    expect(result.pinned?.id).toBe('us:AAPL');
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual(['cn:600519']);
+  });
+
+  test('keeps a pinned symbol that is not in the watchlist', () => {
+    const result = parseWatchlist(['cn:600519'], 'hk:700');
+
+    expect(result.pinned?.id).toBe('hk:00700');
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual(['cn:600519']);
+  });
+
+  test('reports an unparseable pin and keeps rotating the rest', () => {
+    const result = parseWatchlist(['cn:600519'], 'nope');
+
+    expect(result.pinned).toBeUndefined();
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual(['cn:600519']);
+    expect(result.invalid).toEqual([{ entry: 'nope', reason: expect.stringContaining('Missing market prefix') }]);
+  });
+
+  test('treats a blank pin as unpinned', () => {
+    const result = parseWatchlist(['cn:600519'], '   ');
+
+    expect(result.pinned).toBeUndefined();
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual(['cn:600519']);
+    expect(result.invalid).toEqual([]);
+  });
 });
 
 describe('exchangePrefix', () => {
