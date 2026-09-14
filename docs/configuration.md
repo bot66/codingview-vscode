@@ -16,6 +16,22 @@ entry, as are `hk:700` and `hk:00700`. Invalid entries never break the extension
 logged to the output channel, listed in the status bar tooltip with their validation message and
 offered a **Remove** link that deletes that raw entry from the settings.
 
+## Holdings
+
+An entry may be an object instead of a string to carry a position:
+
+```jsonc
+"codingview.watchlist": [
+  "us:AAPL",
+  { "symbol": "cn:600519", "quantity": 100, "cost": 1500 }
+]
+```
+
+`quantity` is the number of units and `cost` the average cost per unit in the quote currency. Both
+are required together; `quantity` must be greater than zero and `cost` zero or greater. The status
+bar appends the profit for the symbol on screen, and the tooltip gains a `P/L` column for every held
+symbol. A halted instrument has no current price, so its profit is left blank until it trades again.
+
 Validation messages, asserted in `src/test/symbols.test.ts`:
 
 | Input | Message |
@@ -38,13 +54,14 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.showList` | Quick pick of every symbol with its quote; picking one rotates to it |
 | `codingview.nextSymbol` | Advances the rotation |
 | `codingview.pinSymbol` | Prompts for the pinned symbol; an empty answer unpins |
+| `codingview.setHolding` | Picks a symbol, then asks for the quantity and average cost; an empty quantity clears the holding |
 | `codingview.removeSymbolEntry` | Removes one raw watchlist entry; invoked from the tooltip's **Remove** link, not from the palette |
 
 ## Settings
 
 | Setting | Type | Default | Constraint |
 | --- | --- | --- | --- |
-| `codingview.watchlist` | `string[]` | `[]` | Entries use the grammar above |
+| `codingview.watchlist` | `(string \| object)[]` | `[]` | Entries use the grammar above, optionally with `quantity` and `cost` |
 | `codingview.refreshIntervalSeconds` | number | `60` | Minimum 15 |
 | `codingview.rotateIntervalSeconds` | number | `5` | Minimum 2 |
 | `codingview.requestTimeoutSeconds` | number | `8` | Minimum 2, maximum 60 |

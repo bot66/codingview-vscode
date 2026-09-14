@@ -7,7 +7,7 @@
 | Activation | `src/extension.ts` | Wires providers, controller and commands; owns the output channel |
 | VS Code UI | `src/statusBar.ts`, `src/watchlist.ts` | Status bar item, timers, rendering, settings writes, quick pick flows |
 | Orchestration | `src/quoteService.ts` | Groups instruments per provider, batches, times out, fails over, reports outcomes |
-| Pure logic | `src/symbols.ts`, `src/format.ts` | Symbol parsing and derivation, price/percent/status bar/tooltip formatting |
+| Pure logic | `src/symbols.ts`, `src/format.ts`, `src/holdings.ts`, `src/settings.ts` | Symbol parsing, holdings and profit/loss, price/percent/status bar/tooltip formatting, setting defaults and clamping |
 | I/O | `src/providers/*` | HTTP requests and payload parsing behind `QuoteProvider` |
 
 The dependency direction is one-way: UI → orchestration → providers → HTTP. Only `extension.ts`,
@@ -18,7 +18,8 @@ plain Node.
 
 - `Instrument { id, market, code }` — `id` is the canonical `market:CODE` string, `market` is
   `'cn' | 'us' | 'crypto'`.
-- `Quote { id, market, code, price, name?, prevClose?, change?, changePercent?, currency?, asOf?, source }`.
+- `Quote { id, market, code, price, name?, prevClose?, change?, changePercent?, halted?, currency?, asOf?, source }`.
+- `Holding { id, quantity, cost }` and `ProfitLoss { value, cost, profit, percent? }` from `holdings.ts`.
 - `QuoteProvider { id, displayName, supports(market), fetch(instruments, signal) }` — returns one
   quote per resolvable instrument, omits the rest, and throws on transport or payload failure.
 - `HttpGetBytes(url, init) => Promise<Uint8Array>` — injectable, so specs replay recorded payloads

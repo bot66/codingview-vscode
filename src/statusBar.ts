@@ -3,12 +3,14 @@ import * as vscode from 'vscode';
 import {
   directionOf,
   formatChangePercent,
+  formatSignedMoney,
   type InvalidTooltipRow,
   quotePrice,
   statusBarText,
   tooltipMarkdown,
   type TooltipRow,
 } from './format';
+import { profitLoss, type Holding } from './holdings';
 import type { Instrument, Quote, QuoteProvider } from './providers/types';
 import { backoffSeconds, ProviderHealth, QuoteService } from './quoteService';
 import { clampedSeconds, SETTINGS_DEFAULTS, SETTINGS_MINIMUMS, type SecondsSetting } from './settings';
@@ -25,6 +27,7 @@ export class StatusBarController implements vscode.Disposable {
   private readonly health = new ProviderHealth();
   private instruments: Instrument[] = [];
   private pinnedInstrument?: Instrument;
+  private holdings = new Map<string, Holding>();
   private invalid: InvalidEntry[] = [];
   private index = 0;
   private stale = false;
@@ -114,12 +117,13 @@ export class StatusBarController implements vscode.Disposable {
   }
 
   private reload(): void {
-    const { instruments, pinned, invalid } = parseWatchlist(
-      this.settings().get<string[]>('watchlist', []),
+    const { instruments, pinned, holdings, invalid } = parseWatchlist(
+      this.settings().get<unknown[]>('watchlist', []),
       this.settings().get<string>('pinnedSymbol', ''),
     );
     this.instruments = instruments;
     this.pinnedInstrument = pinned;
+    this.holdings = holdings;
     this.invalid = invalid;
     if (this.index >= instruments.length) {
       this.index = 0;
@@ -237,10 +241,12 @@ export class StatusBarController implements vscode.Disposable {
 
   private decorate(item: vscode.StatusBarItem, instrument: Instrument): void {
     const quote = this.quotes.get(instrument.id);
+    const holding = this.holdings.get(instrument.id);
     item.text = statusBarText({
       instrument,
       quote,
       stale: this.stale,
+      profit: holding && quote ? this.profitText(quote, holding, false) : undefined,
       labels: { halted: vscode.l10n.t('Halted') },
     });
     item.color = this.colorFor(quote);
@@ -266,6 +272,7 @@ export class StatusBarController implements vscode.Disposable {
         name: quote?.name ?? '',
         price: quotePrice(quote),
         change: quote?.halted ? vscode.l10n.t('Halted') : formatChangePercent(quote?.changePercent),
+        profit: quote ? this.profitText(quote, this.holdings.get(instrument.id), true) : undefined,
       };
     });
     const updatedAt = [...this.quotes.values()]
@@ -299,5 +306,20 @@ export class StatusBarController implements vscode.Disposable {
       reason: entry.reason,
       removeLink: `command:${REMOVE_ENTRY_COMMAND}?${encodeURIComponent(JSON.stringify([entry.entry]))}`,
     }));
+  }
+
+  /** Profit for a held instrument, optionally with the percentage, or undefined without a price. */
+  private profitText(quote: Quote, holding: Holding | undefined, withPercent: boolean): string | undefined {
+    if (!holding) {
+      return undefined;
+    }
+    const result = profitLoss(quote, holding);
+    if (!result) {
+      return undefined;
+    }
+    const money = formatSignedMoney(result.profit, quote.currency);
+    return withPercent && result.percent !== undefined
+      ? `${money} (${formatChangePercent(result.percent)})`
+      : money;
   }
 }

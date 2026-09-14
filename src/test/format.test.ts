@@ -3,7 +3,9 @@ import { describe, expect, test } from 'vitest';
 import {
   directionOf,
   formatChangePercent,
+  formatMoney,
   formatPrice,
+  formatSignedMoney,
   quotePrice,
   statusBarText,
   tooltipMarkdown,
@@ -72,6 +74,12 @@ describe('statusBarText', () => {
     expect(statusBarText({ instrument })).toBe('$(graph) 600519 --');
   });
 
+  test('appends the profit when the symbol is held', () => {
+    expect(statusBarText({ instrument, quote: quote(), profit: '+¥280.00' })).toBe(
+      '$(graph) 600519 1277.96 +0.22% +¥280.00',
+    );
+  });
+
   test('says a halted instrument has no price rather than showing 0.00', () => {
     const halted = quote({ price: 0, change: undefined, changePercent: undefined, halted: true });
 
@@ -85,6 +93,24 @@ describe('quotePrice', () => {
     expect(quotePrice(quote())).toBe('1277.96');
     expect(quotePrice(undefined)).toBe('--');
     expect(quotePrice(quote({ price: 0, halted: true }))).toBe('--');
+  });
+});
+
+describe('formatMoney', () => {
+  test('uses the currency symbol when one is known', () => {
+    expect(formatMoney(1277.96, 'CNY')).toBe('¥1,277.96');
+    expect(formatMoney(430.6, 'HKD')).toBe('HK$430.60');
+    expect(formatMoney(333.4, 'USD')).toBe('$333.40');
+  });
+
+  test('falls back to the currency code', () => {
+    expect(formatMoney(78487.62, 'USDT')).toBe('78,487.62 USDT');
+  });
+
+  test('always shows the sign of a profit or a loss', () => {
+    expect(formatSignedMoney(-280, 'CNY')).toBe('-¥280.00');
+    expect(formatSignedMoney(280, 'CNY')).toBe('+¥280.00');
+    expect(formatSignedMoney(0, 'CNY')).toBe('¥0.00');
   });
 });
 
@@ -151,5 +177,29 @@ describe('tooltipMarkdown', () => {
     const markdown = tooltipMarkdown({ rows: [], stale: false });
 
     expect(markdown).not.toContain('Ignored entries');
+  });
+
+  test('adds a profit column when a row is held', () => {
+    const markdown = tooltipMarkdown({
+      rows: [
+        { id: 'cn:600519', name: '贵州茅台', price: '1277.96', change: '+0.22%', profit: '+¥280.00' },
+        { id: 'us:AAPL', name: '', price: '333.40', change: '+0.34%' },
+      ],
+      stale: false,
+    });
+
+    expect(markdown).toContain('| Symbol | Price | Change | P/L | Name |');
+    expect(markdown).toContain('| cn:600519 | 1277.96 | +0.22% | +¥280.00 | 贵州茅台 |');
+    expect(markdown).toContain('| us:AAPL | 333.40 | +0.34% | -- |');
+  });
+
+  test('keeps the four column table when nothing is held', () => {
+    const markdown = tooltipMarkdown({
+      rows: [{ id: 'cn:600519', name: '', price: '1277.96', change: '+0.22%' }],
+      stale: false,
+    });
+
+    expect(markdown).toContain('| Symbol | Price | Change | Name |');
+    expect(markdown).not.toContain('P/L');
   });
 });

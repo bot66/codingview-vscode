@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
 
-import { parseInstrument } from './symbols';
+import { parseInstrument, watchlistEntrySymbol } from './symbols';
 
 const SECTION = 'codingview';
 const WATCHLIST_KEY = 'watchlist';
 const PINNED_KEY = 'pinnedSymbol';
 
-export function readWatchlist(): string[] {
-  const value = vscode.workspace.getConfiguration(SECTION).get<string[]>(WATCHLIST_KEY, []);
-  return Array.isArray(value) ? value.filter((entry) => typeof entry === 'string') : [];
+/** Raw entries: a `market:CODE` string, or an object with a `symbol` plus an optional holding. */
+export function readWatchlist(): unknown[] {
+  const value = vscode.workspace.getConfiguration(SECTION).get<unknown[]>(WATCHLIST_KEY, []);
+  return Array.isArray(value) ? value : [];
 }
 
 export function readPinnedSymbol(): string {
@@ -28,16 +29,43 @@ async function writeSetting(key: string, value: unknown): Promise<void> {
   await configuration.update(key, value, target);
 }
 
-export async function writeWatchlist(entries: string[]): Promise<void> {
+export async function writeWatchlist(entries: unknown[]): Promise<void> {
   await writeSetting(WATCHLIST_KEY, entries);
 }
 
-function canonicalId(entry: string): string | undefined {
+function canonicalId(entry: unknown): string | undefined {
+  const symbol = watchlistEntrySymbol(entry);
+  if (symbol === undefined) {
+    return undefined;
+  }
   try {
-    return parseInstrument(entry).id;
+    return parseInstrument(symbol).id;
   } catch {
     return undefined;
   }
+}
+
+/** Quick pick entries that keep the raw value index, so object entries survive a round trip. */
+function watchlistItems(watchlist: readonly unknown[]): vscode.QuickPickItem[] {
+  return watchlist.map((entry) => {
+    const symbol = watchlistEntrySymbol(entry);
+    return {
+      label: symbol ?? JSON.stringify(entry),
+      description: typeof entry === 'string' ? undefined : vscode.l10n.t('holding'),
+    };
+  });
+}
+
+function parseNumber(value: string, minimum: number, exclusive: boolean): number | undefined {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || (exclusive ? parsed <= minimum : parsed < minimum)) {
+    return undefined;
+  }
+  return parsed;
 }
 
 export async function addSymbol(): Promise<void> {
@@ -78,15 +106,17 @@ export async function removeSymbol(): Promise<void> {
     return;
   }
 
-  const picked = await vscode.window.showQuickPick(watchlist, {
+  const items = watchlistItems(watchlist);
+  const picked = await vscode.window.showQuickPick(items, {
     title: vscode.l10n.t('Pick a symbol to remove'),
   });
   if (picked === undefined) {
     return;
   }
 
-  await writeWatchlist(watchlist.filter((entry) => entry !== picked));
-  void vscode.window.showInformationMessage(vscode.l10n.t('Removed {0} from the watchlist.', picked));
+  const index = items.indexOf(picked);
+  await writeWatchlist(watchlist.filter((_entry, position) => position !== index));
+  void vscode.window.showInformationMessage(vscode.l10n.t('Removed {0} from the watchlist.', picked.label));
 }
 
 /** Removes one raw entry, used by the "Remove" links in the status bar tooltip. */
@@ -136,4 +166,61 @@ export async function pinSymbol(): Promise<void> {
   const id = parseInstrument(trimmed).id;
   await writeSetting(PINNED_KEY, id);
   void vscode.window.showInformationMessage(vscode.l10n.t('Pinned {0} to the status bar.', id));
+}
+
+/** Records the quantity and average cost for one watchlist entry, for the profit and loss columns. */
+export async function setHolding(): Promise<void> {
+  const watchlist = readWatchlist();
+  if (watchlist.length === 0) {
+    void vscode.window.showInformationMessage(vscode.l10n.t('The watchlist is empty. Add a symbol first.'));
+    return;
+  }
+
+  const items = watchlistItems(watchlist);
+  const picked = await vscode.window.showQuickPick(items, {
+    title: vscode.l10n.t('Pick a symbol to set a holding for'),
+  });
+  if (picked === undefined) {
+    return;
+  }
+  const index = items.indexOf(picked);
+  const id = canonicalId(watchlist[index]);
+  if (id === undefined) {
+    void vscode.window.showErrorMessage(vscode.l10n.t('{0} is not a valid symbol.', picked.label));
+    return;
+  }
+
+  const quantityInput = await vscode.window.showInputBox({
+    prompt: vscode.l10n.t('How many units do you hold? Leave the box empty to clear the holding.'),
+    placeHolder: '100',
+    validateInput: (value) =>
+      value.trim().length === 0 || parseNumber(value, 0, true) !== undefined
+        ? undefined
+        : vscode.l10n.t('Enter a number greater than zero.'),
+  });
+  if (quantityInput === undefined) {
+    return;
+  }
+
+  const next = [...watchlist];
+  if (quantityInput.trim().length === 0) {
+    next[index] = id;
+    await writeWatchlist(next);
+    void vscode.window.showInformationMessage(vscode.l10n.t('Cleared the holding for {0}.', id));
+    return;
+  }
+
+  const costInput = await vscode.window.showInputBox({
+    prompt: vscode.l10n.t('What did one unit cost on average, in the quote currency?'),
+    placeHolder: '1500',
+    validateInput: (value) =>
+      parseNumber(value, 0, false) !== undefined ? undefined : vscode.l10n.t('Enter a number that is zero or greater.'),
+  });
+  if (costInput === undefined) {
+    return;
+  }
+
+  next[index] = { symbol: id, quantity: parseNumber(quantityInput, 0, true), cost: parseNumber(costInput, 0, false) };
+  await writeWatchlist(next);
+  void vscode.window.showInformationMessage(vscode.l10n.t('Saved the holding for {0}.', id));
 }

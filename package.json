@@ -60,6 +60,10 @@
       {
         "command": "codingview.pinSymbol",
         "title": "%command.pinSymbol%"
+      },
+      {
+        "command": "codingview.setHolding",
+        "title": "%command.setHolding%"
       }
     ],
     "configuration": {
@@ -68,7 +72,32 @@
         "codingview.watchlist": {
           "type": "array",
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "%config.watchlist.symbolEntry%"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "symbol"
+                ],
+                "properties": {
+                  "symbol": {
+                    "type": "string",
+                    "description": "%config.watchlist.symbolEntry%"
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "description": "%config.watchlist.quantity%"
+                  },
+                  "cost": {
+                    "type": "number",
+                    "description": "%config.watchlist.cost%"
+                  }
+                }
+              }
+            ]
           },
           "default": [],
           "scope": "window",

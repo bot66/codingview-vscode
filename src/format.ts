@@ -26,6 +26,28 @@ export function formatChangePercent(percent: number | undefined): string {
   return `${sign}${Math.abs(percent).toFixed(2)}%`;
 }
 
+const CURRENCY_SYMBOLS: Record<string, string> = { CNY: '¥', HKD: 'HK$', USD: '$' };
+
+/** Money with two decimals and thousands separators, prefixed by a symbol when one is known. */
+export function formatMoney(value: number, currency?: string): string {
+  const formatted = Math.abs(value).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const sign = value < 0 ? '-' : '';
+  if (!currency) {
+    return `${sign}${formatted}`;
+  }
+  const symbol = CURRENCY_SYMBOLS[currency];
+  return symbol ? `${sign}${symbol}${formatted}` : `${sign}${formatted} ${currency}`;
+}
+
+/** Same as {@link formatMoney} but always signs a non-zero value, for profit and loss. */
+export function formatSignedMoney(value: number, currency?: string): string {
+  const formatted = formatMoney(value, currency);
+  return value > 0 ? `+${formatted}` : formatted;
+}
+
 export function directionOf(quote: Quote | undefined): Direction {
   if (!quote || quote.halted || quote.changePercent === undefined || quote.changePercent === 0) {
     return 'flat';
@@ -46,9 +68,11 @@ export function statusBarText(args: {
   instrument: Instrument;
   quote?: Quote;
   stale?: boolean;
+  /** Preformatted profit for a held symbol, appended after the change percent. */
+  profit?: string;
   labels?: StatusBarLabels;
 }): string {
-  const { instrument, quote, stale, labels } = args;
+  const { instrument, quote, stale, profit, labels } = args;
   const icon = stale ? '$(warning)' : '$(graph)';
   if (!quote) {
     return `${icon} ${instrument.code} --`;
@@ -56,7 +80,8 @@ export function statusBarText(args: {
   if (quote.halted) {
     return `${icon} ${instrument.code} -- ${labels?.halted ?? 'Halted'}`;
   }
-  return `${icon} ${instrument.code} ${formatPrice(quote.price, quote.market)} ${formatChangePercent(quote.changePercent)}`;
+  const head = `${icon} ${instrument.code} ${formatPrice(quote.price, quote.market)} ${formatChangePercent(quote.changePercent)}`;
+  return profit ? `${head} ${profit}` : head;
 }
 
 export interface TooltipRow {
@@ -64,6 +89,8 @@ export interface TooltipRow {
   name: string;
   price: string;
   change: string;
+  /** Preformatted profit for a held symbol; the P/L column appears when any row has one. */
+  profit?: string;
 }
 
 export interface InvalidTooltipRow {
@@ -100,13 +127,19 @@ export function tooltipMarkdown(args: TooltipArgs): string {
   const invalidTitle = labels?.invalidTitle ?? 'Ignored entries';
   const remove = labels?.remove ?? 'Remove';
 
-  const lines = ['### CodingView', '', '| Symbol | Price | Change | Name |', '| --- | --- | --- | --- |'];
+  const withProfit = rows.some((row) => row.profit !== undefined);
+  const lines = withProfit
+    ? ['### CodingView', '', '| Symbol | Price | Change | P/L | Name |', '| --- | --- | --- | --- | --- |']
+    : ['### CodingView', '', '| Symbol | Price | Change | Name |', '| --- | --- | --- | --- |'];
   for (const row of rows) {
-    lines.push(
-      row.name
-        ? `| ${row.id} | ${row.price} | ${row.change} | ${row.name} |`
-        : `| ${row.id} | ${row.price} | ${row.change} |`,
-    );
+    const cells = [row.id, row.price, row.change];
+    if (withProfit) {
+      cells.push(row.profit ?? '--');
+    }
+    if (row.name) {
+      cells.push(row.name);
+    }
+    lines.push(`| ${cells.join(' | ')} |`);
   }
   if (invalid && invalid.length > 0) {
     lines.push('', `**${invalidTitle}**`, '', '| Entry | Problem | |', '| --- | --- | --- |');

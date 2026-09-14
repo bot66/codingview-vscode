@@ -82,6 +82,34 @@ describe('parseWatchlist', () => {
     expect(result.instruments.map((instrument) => instrument.id)).toEqual(['cn:600519']);
     expect(result.invalid).toEqual([]);
   });
+
+  test('reads holdings from object entries', () => {
+    const result = parseWatchlist([
+      { symbol: 'cn:600519', quantity: 10, cost: 1200.5 },
+      'us:AAPL',
+    ]);
+
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual(['cn:600519', 'us:AAPL']);
+    expect(result.holdings.get('cn:600519')).toEqual({ id: 'cn:600519', quantity: 10, cost: 1200.5 });
+    expect(result.holdings.has('us:AAPL')).toBe(false);
+  });
+
+  test('reports an object entry without a usable symbol', () => {
+    const result = parseWatchlist([{ quantity: 10, cost: 5 }]);
+
+    expect(result.instruments).toEqual([]);
+    expect(result.invalid[0].reason).toContain('symbol');
+  });
+
+  test('reports an object entry whose holding is incomplete', () => {
+    const result = parseWatchlist([{ symbol: 'cn:600519', quantity: 10 }]);
+
+    expect(result.instruments).toEqual([]);
+    expect(result.invalid[0]).toEqual({
+      entry: 'cn:600519',
+      reason: expect.stringContaining('"quantity" and "cost"'),
+    });
+  });
 });
 
 describe('exchangePrefix', () => {

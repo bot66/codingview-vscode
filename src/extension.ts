@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 import { formatChangePercent, formatPrice } from './format';
 import { createDefaultProviders } from './providers';
 import { StatusBarController } from './statusBar';
-import { parseInstrument } from './symbols';
-import { addSymbol, pinSymbol, readWatchlist, removeSymbol, removeSymbolEntry } from './watchlist';
+import { parseInstrument, watchlistEntrySymbol } from './symbols';
+import { addSymbol, pinSymbol, readWatchlist, removeSymbol, removeSymbolEntry, setHolding } from './watchlist';
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('CodingView');
@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('codingview.removeSymbol', () => removeSymbol()),
     vscode.commands.registerCommand('codingview.removeSymbolEntry', (entry: string) => removeSymbolEntry(entry)),
     vscode.commands.registerCommand('codingview.pinSymbol', () => pinSymbol()),
+    vscode.commands.registerCommand('codingview.setHolding', () => setHolding()),
     vscode.commands.registerCommand('codingview.refreshNow', () => controller.refreshNow()),
     vscode.commands.registerCommand('codingview.nextSymbol', () => controller.next()),
     vscode.commands.registerCommand('codingview.showList', () => showList(controller)),
@@ -38,9 +39,13 @@ async function showList(controller: StatusBarController): Promise<void> {
 
   const items: vscode.QuickPickItem[] = [];
   for (const entry of entries) {
+    const symbol = watchlistEntrySymbol(entry);
+    if (symbol === undefined) {
+      continue;
+    }
     let id: string;
     try {
-      id = parseInstrument(entry).id;
+      id = parseInstrument(symbol).id;
     } catch {
       continue;
     }

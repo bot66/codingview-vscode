@@ -1,4 +1,5 @@
 import type { Instrument, Market } from './providers/types';
+import { holdingFromEntry, type Holding } from './holdings';
 
 const MARKETS: readonly Market[] = ['cn', 'hk', 'us', 'crypto'];
 
@@ -69,38 +70,83 @@ export interface InvalidEntry {
   reason: string;
 }
 
+/**
+ * The symbol inside a raw watchlist entry. Entries are `market:CODE` strings, or objects with a
+ * `symbol` field plus an optional `quantity` and `cost` for profit and loss.
+ */
+export function watchlistEntrySymbol(raw: unknown): string | undefined {
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (typeof raw === 'object' && raw !== null) {
+    const symbol = (raw as { symbol?: unknown }).symbol;
+    return typeof symbol === 'string' ? symbol : undefined;
+  }
+  return undefined;
+}
+
+function describeEntry(raw: unknown): string {
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  try {
+    return JSON.stringify(raw) ?? String(raw);
+  } catch {
+    return String(raw);
+  }
+}
+
 export interface ParsedWatchlist {
   /** Watchlist instruments in configuration order, without the pinned one. */
   instruments: Instrument[];
   /** The `codingview.pinnedSymbol` instrument, when it parses. */
   pinned?: Instrument;
+  /** Quantity and cost basis per instrument id, for the entries that carry one. */
+  holdings: Map<string, Holding>;
   invalid: InvalidEntry[];
 }
 
-export function parseWatchlist(entries: readonly string[], pinnedEntry = ''): ParsedWatchlist {
+export function parseWatchlist(entries: readonly unknown[], pinnedEntry: unknown = ''): ParsedWatchlist {
   const instruments: Instrument[] = [];
+  const holdings = new Map<string, Holding>();
   const invalid: InvalidEntry[] = [];
   const seen = new Set<string>();
-  const pinned = parseOptionalInstrument(pinnedEntry, invalid);
+  const pinned = parseOptionalInstrument(typeof pinnedEntry === 'string' ? pinnedEntry : '', invalid);
 
   if (pinned) {
     seen.add(pinned.id);
   }
 
-  for (const entry of entries) {
+  for (const raw of entries) {
+    const symbol = watchlistEntrySymbol(raw);
+    if (symbol === undefined) {
+      invalid.push({
+        entry: describeEntry(raw),
+        reason: 'Each watchlist entry is a symbol string or an object with a "symbol" field.',
+      });
+      continue;
+    }
     try {
-      const instrument = parseInstrument(entry);
+      const instrument = parseInstrument(symbol);
       if (seen.has(instrument.id) || pinned?.id === instrument.id) {
+        continue;
+      }
+      const { holding, error } = holdingFromEntry(raw, instrument.id);
+      if (error !== undefined) {
+        invalid.push({ entry: symbol, reason: error });
         continue;
       }
       seen.add(instrument.id);
       instruments.push(instrument);
+      if (holding) {
+        holdings.set(instrument.id, holding);
+      }
     } catch (error) {
-      invalid.push({ entry, reason: error instanceof Error ? error.message : String(error) });
+      invalid.push({ entry: symbol, reason: error instanceof Error ? error.message : String(error) });
     }
   }
 
-  return { instruments, pinned, invalid };
+  return { instruments, pinned, holdings, invalid };
 }
 
 /** The pinned setting is a single entry; a blank value means "not pinned". */

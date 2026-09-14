@@ -32,6 +32,7 @@ Every entry uses an explicit market prefix:
 | `CodingView: Show Watchlist` | Lists every symbol with its price; picking one rotates the status bar to it |
 | `CodingView: Next Symbol` | Advances the rotation manually |
 | `CodingView: Pin Symbol` | Keeps one symbol in its own status bar item, next to the rotation |
+| `CodingView: Set Holding` | Records the quantity and average cost for a symbol, for profit and loss |
 
 ## Settings
 
@@ -81,7 +82,6 @@ test strategy, release process, decision log and roadmap.
 
 ## Known limitations
 
-- The watchlist is a flat symbol list; there is no holdings or profit/loss tracking.
 - Invalid symbols show `--` in the status bar and are listed in the tooltip with a **Remove** link.
 
 ## License

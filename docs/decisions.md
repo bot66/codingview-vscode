@@ -57,6 +57,15 @@ Enough to judge a position at a glance and it fits one status bar line. Rejected
 and quantity for profit/loss (heavier settings schema and validation) and a bare price with no
 direction.
 
+## Holdings as objects inside the watchlist
+
+`codingview.watchlist` accepts `{ "symbol": …, "quantity": …, "cost": … }` next to the plain symbol
+strings, so a position travels with the symbol it belongs to and the schema stays a single list.
+Rejected: a second `codingview.holdings` map (two sources to keep in sync and a duplicate symbol
+grammar) and a separate holdings file (invisible, unshareable, no diff). Both fields are required
+together because a quantity without a cost basis cannot produce a percentage, and the status bar
+shows the profit only when a price is available.
+
 ## Vitest instead of `@vscode/test-electron`
 
 The pure core is the risky part, and Vitest runs it in milliseconds with no editor download.
