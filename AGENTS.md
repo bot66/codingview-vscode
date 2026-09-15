@@ -13,7 +13,10 @@ item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vi
 - `test/smoke/` — `@vscode/test-cli` specs that run in a real extension host (`npm run test:smoke`).
 - `scripts/generate-icon.mjs` regenerates `media/icon.png`; `scripts/generate-screenshots.mjs`
   regenerates `media/statusbar.png` and `media/rotation.gif` from a real window; `scripts/verify-live.mjs`
-  checks the real endpoints; `l10n/` holds the zh-cn strings.
+  checks the real endpoints; `scripts/release-notes.mjs` prints the `CHANGELOG.md` section that
+  becomes the GitHub Release notes; `l10n/` holds the zh-cn strings.
+- `.github/workflows/ci.yml` gates every push and pull request; `.github/workflows/release.yml` turns
+  a `v*` tag into a GitHub Release with the packaged `.vsix`.
 - `docs/` — design documents; update the matching page when behaviour or commands change.
 
 ## Build, Test, and Development Commands
@@ -53,4 +56,7 @@ the issue, list manual verification steps, and attach a screenshot or GIF for UI
 - Add new sources behind `QuoteProvider`, keyless by default, backed by fixtures.
 - Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion.
 - Run `npm run test:smoke` after touching `statusBar.ts`, `extension.ts`, `watchlist.ts` or the manifest.
+- Releases are GitHub Release assets cut from `v*` tags. Do not add Visual Studio Marketplace
+  publishing steps (Azure DevOps organisation, PAT or Entra credentials): the project ships through
+  GitHub Releases only, and `docs/decisions.md` records why.
 - Never commit `dist/`, `node_modules/` or `*.vsix`; `.gitignore` covers them.

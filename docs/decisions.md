@@ -86,10 +86,15 @@ status bar rendering). A smoke test in a real host is a roadmap item.
 Type checking stays with `tsc`, the shipped artifact is a single minified CommonJS file. Rejected:
 `tsc` emitting into the package (larger, no bundling) and webpack (more configuration for no gain).
 
-## Publish to the Marketplace
+## GitHub Releases as the only distribution channel
 
-Marketplace reaches the audience this tool is for. Rejected: local `.vsix` only (no discovery) and
-Open VSX for v1 (an extra release target; adding it later is mechanical).
+The extension ships as a `.vsix` attached to a GitHub Release, cut by
+`.github/workflows/release.yml` from a `v*` tag. Installing one file is a single command, the
+release page doubles as the changelog, and the repository stays the source of truth. Rejected:
+publishing to the Visual Studio Marketplace, which today means running an Azure DevOps organisation
+with an Azure subscription behind it — infrastructure this project has no use for — and rejected:
+an Open VSX listing, which would not appear in the official VS Code extension view that the tool
+targets. Building from source stays available, it is just not the supported way to install.
 
 ## GBK decoding with a UTF-8 fallback
 

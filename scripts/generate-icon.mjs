@@ -1,4 +1,4 @@
-// Generates media/icon.png (128x128, the size the Marketplace requires).
+// Generates media/icon.png (128x128, the conventional extension icon size).
 // Drawn programmatically with supersampling so the repository needs no binary tooling.
 import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';

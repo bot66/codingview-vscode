@@ -25,17 +25,21 @@ loss because the entry carries a quantity and a cost. Each item reads `name code
 
 ## Install
 
-Install **CodingView** from the Visual Studio Marketplace — search for *CodingView* in the Extensions
-view, or run:
+Download the `.vsix` from the [latest release](https://github.com/bot66/codingview-vscode/releases/latest)
+and install it:
 
 ```bash
-code --install-extension bot66.codingview
+code --install-extension codingview-<version>.vsix
 ```
+
+The Extensions view's `...` menu → **Install from VSIX…** does the same thing. CodingView is *not*
+published to the Visual Studio Marketplace: releases are GitHub Release assets, and this repository
+is the only distribution channel. `npm run package` builds the same `.vsix` locally, and `F5` runs
+the extension from source.
 
 Then run **CodingView: Add Symbol** from the command palette and enter a symbol such as `cn:600519`.
 The status bar starts rotating through the watchlist every 5 seconds and refreshes prices every 60
-seconds. To try an unreleased build instead, run `npm run package` and install the resulting `.vsix`,
-or press `F5` inside this repository.
+seconds.
 
 ## Symbols
 

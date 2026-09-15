@@ -14,7 +14,11 @@
 - Configurable request timeout, plus a circuit breaker that skips a source failing twice in a row.
 - US delay disclosure in the tooltip.
 - Extension-host smoke test and a GitHub Actions workflow.
-- README screenshots captured from a real window, and real publisher/repository metadata.
+- README screenshots captured from a real window, and repository metadata that points at this
+  project.
+- Tag-driven release workflow: `v*` tags verify, test and package the extension, then attach the
+  `.vsix` to a GitHub Release with these notes. The project is not published to the Visual Studio
+  Marketplace.
 
 ## 0.1.0
 

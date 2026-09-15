@@ -19,7 +19,7 @@ deliberately not planned, and the limitations that remain.
 | US delay transparency | The tooltip says that US quotes may be delayed by the source | `src/statusBar.ts`, `src/format.ts` |
 | End-to-end coverage | `@vscode/test-cli` suite covering activation, command registration, the empty placeholder, an ignored entry and the pinned item | `test/smoke/extension.test.ts` |
 | CI workflow | lint, unit tests, compile, `xvfb-run` smoke test and packaging on every push and pull request | `.github/workflows/ci.yml` |
-| Marketplace polish | Real screenshots and a rotation GIF, a listing-oriented README, and concrete publisher/repository metadata | `media/`, `README.md`, `package.json` |
+| Release polish | Real screenshots and a rotation GIF, a README written for visitors, and a tag-driven GitHub Release workflow that attaches the `.vsix` | `media/`, `README.md`, `.github/workflows/release.yml` |
 
 Everything above is covered by `npm test` (unit), `npm run test:smoke` (extension host) or
 `npm run verify:live` (real endpoints); see [testing.md](testing.md).
@@ -36,7 +36,7 @@ scratch.
 | Per-market delay disclosure | The tooltip carries one US note today; A-share and Hong Kong prices are also delayed after their session closes. Splitting the note per market needs a session calendar, which is a feature of its own. |
 | Sidebar tree view or webview | Rejected in [decisions.md](decisions.md): the product is a glanceable status bar item, and a webview would add a second rendering stack for no gain in the flow it serves. |
 | Portfolio totals in the tooltip | A total needs one currency across A-shares, Hong Kong and US positions, which means storing an FX assumption the extension cannot verify. |
-| Marketplace popularity metrics | Telemetry is a non-goal, so popularity has to come from the Marketplace reports. |
+| A Visual Studio Marketplace listing | Not planned: it needs an Azure DevOps organisation and an Azure subscription, while a `.vsix` on the release page installs in one command and covers the same users. |
 
 ## Known limitations
 

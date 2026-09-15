@@ -28,43 +28,53 @@ package. A successful run packs eleven entries: `extension.vsixmanifest`, `[Cont
 manifest, `dist/extension.js`, `media/icon.png`, `l10n/`, the NLS bundles, `LICENSE.txt`,
 `changelog.md` and `readme.md`.
 
-## Publishing to the Marketplace
+## Distribution
 
-Prerequisites, all of which are user-owned accounts:
+Releases are **GitHub Release assets**, and that is the only channel: the project has no Visual
+Studio Marketplace publisher and no plans for one (see [decisions.md](decisions.md)). Users download
+the `.vsix` from the release page and install it with `code --install-extension codingview-<version>.vsix`.
 
-1. An Azure DevOps organisation and a Personal Access Token with **Marketplace → Manage** scope.
-2. A publisher id created at the Marketplace management portal; `publisher` in `package.json` must
-   match it. The repository currently ships `bot66`, the account the GitHub repository lives under —
-   change it if the Marketplace publisher id differs.
-3. `repository.url` and `bugs.url` point at `github.com/bot66/codingview-vscode`, which the
-   Marketplace listing links to; adjust both if the project moves.
+`package.json` still carries a `publisher` field because it is part of the extension identifier
+(`bot66.codingview`), which appears in VS Code's extension host and in logs; it is not a Marketplace
+registration. `repository`, `bugs` and `icon` stay because the README links to them and VS Code shows
+the icon.
 
-Then:
+### Cutting a release
 
-```bash
-npx vsce login <publisher-id>   # paste the PAT
-npm run package                 # sanity check the .vsix first
-npx vsce publish patch          # or minor / major
-```
+1. Bump `version` in `package.json` and add a matching `## <version>` section to `CHANGELOG.md` —
+   that section becomes the release notes, and the workflow fails without it.
+2. Verify locally: `npm run lint && npm test && npm run compile && npm run test:smoke`, then
+   `npm run package` and install the `.vsix` on a scratch profile.
+3. Commit the bump, tag it and push the tag:
 
-`vsce publish` recompiles through `vscode:prepublish`, bumps the version, pushes a git tag and
-uploads. Keep `CHANGELOG.md` current — it becomes the release notes.
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+4. `.github/workflows/release.yml` then checks that the tag matches `package.json`, runs the same
+   gates as CI, packages the extension and creates the GitHub Release with the `.vsix` attached and
+   the changelog section as its notes. Re-running the failed job is enough if a step trips.
+
+There is no pre-release channel: users on `master` get unreleased behaviour only by building the
+`.vsix` themselves.
 
 ## Listing requirements
 
 | Asset | Requirement |
 | --- | --- |
 | `media/icon.png` | 128×128 PNG, referenced by `icon`; regenerate with `node scripts/generate-icon.mjs` |
-| `README.md` | Becomes the listing page; keep the table of settings accurate |
+| `README.md` | The project page and the content of the extension details view; keep the tables accurate |
 | `LICENSE` | MIT; vsce repackages it as `LICENSE.txt` |
-| `CHANGELOG.md` | Per-release notes |
+| `CHANGELOG.md` | Per-release notes; the release workflow prints the matching section |
 | `engines.vscode` | `^1.90.0`; raise it deliberately, it gates installation for older editors |
 
 `media/statusbar.png` and `media/rotation.gif` are captured from a real window with
-`npm run media` (see the script's header for the VS Code binary it needs), and the Marketplace page
-renders them from the packaged `.vsix` because both files are part of the package. Re-run the script
-after a rendering change: a host without a CJK font draws the Chinese instrument names as boxes,
-which is how the first attempt looked.
+`npm run media` (see the script's header for the VS Code binary it needs). Both files stay in the
+package because VS Code renders the bundled README in the extension details view, where relative
+image links resolve to the extension's own files; GitHub renders the same paths from the repository.
+Re-run the script after a rendering change: a host without a CJK font draws the Chinese instrument
+names as boxes, which is how the first attempt looked.
 
 ## Verification checklist
 
@@ -72,6 +82,7 @@ which is how the first attempt looked.
 2. `npm run compile` — bundle written, no type errors.
 3. `npm run package` — `.vsix` produced; confirm `extension/dist/extension.js` is inside it.
 4. `code --install-extension codingview-<version>.vsix` on a scratch profile, then add one symbol.
+5. Tag `v<version>` once the checklist is green, which publishes the `.vsix` to the release page.
 
 ## Continuous integration
 

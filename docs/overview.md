@@ -23,6 +23,8 @@ developer can follow their portfolio without leaving the editor.
 
 - No webview, charts or sidebar tree view.
 - No accounts or telemetry. The only optional key is Finnhub, and it lives in `SecretStorage`.
+- No Visual Studio Marketplace publication: releases are GitHub Release assets, installed with
+  `code --install-extension`.
 
 ## User stories
 
