@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   changelogSection,
   compareVersions,
+  isShippedPath,
   renameUnreleasedHeading,
   replaceManifestVersion,
   versionProblems,
@@ -69,7 +70,35 @@ describe('versionProblems', () => {
     ]);
   });
 
-  test('reports a version that an earlier commit already released', () => {
+  test('accepts a docs-only change on top of a released version', () => {
+    expect(
+      versionProblems({
+        ...OK_STATE,
+        releasedCommit: 'aaa',
+        headCommit: 'bbb',
+        changedPaths: [
+          'AGENTS.md',
+          'docs/release.md',
+          'scripts/check-version.mjs',
+          'src/test/versioning.test.ts',
+        ],
+      }),
+    ).toEqual([]);
+  });
+
+  test('reports a shipped change that reused a released version, naming the paths', () => {
+    const problems = versionProblems({
+      ...OK_STATE,
+      releasedCommit: 'aaa',
+      headCommit: 'bbb',
+      changedPaths: ['src/quoteService.ts', 'CHANGELOG.md'],
+    });
+
+    expect(problems).toEqual([expect.stringContaining('already released')]);
+    expect(problems[0]).toContain('src/quoteService.ts');
+  });
+
+  test('reports a released version when the changed files could not be read', () => {
     expect(versionProblems({ ...OK_STATE, releasedCommit: 'aaa', headCommit: 'bbb' })).toEqual([
       expect.stringContaining('already released'),
     ]);
@@ -83,6 +112,41 @@ describe('versionProblems', () => {
     // A malformed version also desynchronises the lockfile and the changelog, so only the first
     // problem is asserted — that is the one a human has to fix first.
     expect(versionProblems({ ...OK_STATE, version: '0.3' })[0]).toContain('not major.minor.patch');
+  });
+});
+
+describe('isShippedPath', () => {
+  test('counts everything that can reach the .vsix as shipped', () => {
+    for (const path of [
+      'src/extension.ts',
+      'src/providers/sina.ts',
+      'media/icon.png',
+      'l10n/bundle.l10n.zh-cn.json',
+      'package.json',
+      'package-lock.json',
+      'esbuild.mjs',
+      '.vscodeignore',
+    ]) {
+      expect(isShippedPath(path), path).toBe(true);
+    }
+  });
+
+  test('leaves documentation, CI, scripts and tests out', () => {
+    for (const path of [
+      'AGENTS.md',
+      'README.md',
+      'CHANGELOG.md',
+      'docs/release.md',
+      '.github/workflows/ci.yml',
+      'scripts/check-version.mjs',
+      'test/smoke/extension.test.ts',
+      'src/test/versioning.test.ts',
+      'src/test/fixtures/tencent.json',
+      '.gitignore',
+      'eslint.config.mjs',
+    ]) {
+      expect(isShippedPath(path), path).toBe(false);
+    }
   });
 });
 

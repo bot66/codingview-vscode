@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+- Documentation, agent notes, CI workflows, scripts and tests no longer cut a release: a version is
+  required only when a change can reach the `.vsix`, so a docs edit stops burning a version number
+  and publishing an empty GitHub Release. `npm run check:version` compares the diff against the
+  released tag and only asks for a bump when shipped paths moved.
+
 ## 0.3.0
 
 - Crypto symbols can name their source: `crypto:gate:LITUSDT`, which is how two coins sharing a

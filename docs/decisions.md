@@ -142,17 +142,20 @@ and make "which source answered" non-deterministic, and rejected: doing nothing,
 request timeout again on every cycle while an endpoint is down. The cooldown is short enough that a
 provider coming back is picked up within a few minutes.
 
-## One version per change
+## A version per shipped change
 
-Every commit that lands on `master` bumps the version and becomes a GitHub Release: MINOR for a
-feature or a behaviour change, PATCH for a fix, wording or tooling change. The repository has one
-distribution channel, so the version number is the receipt that a change actually shipped — and
-batching the bumps until release day is how `package.json` reached `0.2.0` while
-`package-lock.json` stayed on `0.1.0`. The rule is therefore enforced rather than remembered:
-`scripts/check-version.mjs` (pure rules in `src/versioning.ts`, unit tested) fails CI when the three
-files disagree, when the changelog section is missing or empty, or when a new commit reuses a
-version that an earlier commit already released, and `scripts/bump-version.mjs` moves all three
-files in one command. Rejected: staying with release-day bumps (the drift above, plus `.vsix` files
-that cannot be told apart by version), and rejected: deriving the version from commit messages or
-timestamps, which would need a release toolchain and still would not make the `.vsix` distinguishable
-to a user installing it by hand.
+Every change that can reach the `.vsix` bumps the version and becomes a GitHub Release: MINOR for a
+feature or a behaviour change, PATCH for a fix, dependency or packaging change. Documentation, agent
+notes, CI workflows, dev scripts and tests keep the released version and ride along with the next
+shipped change — they cannot alter what users install, so a bump would only burn a version number
+and publish a Release whose `.vsix` is identical. The repository has one distribution channel, so
+the version number is the receipt that a change actually shipped — and batching the bumps until
+release day is how `package.json` reached `0.2.0` while `package-lock.json` stayed on `0.1.0`. The
+rule is therefore enforced rather than remembered: `scripts/check-version.mjs` (pure rules in
+`src/versioning.ts`, unit tested) fails CI when the three files disagree, when the changelog section
+is missing or empty, or when a change touching shipped paths reuses a version an earlier commit
+already released, and `scripts/bump-version.mjs` moves all three files in one command. Rejected:
+staying with release-day bumps (the drift above, plus `.vsix` files that cannot be told apart by
+version); rejected: deriving the version from commit messages or timestamps, which would need a
+release toolchain and still would not make the `.vsix` distinguishable to a user installing it by
+hand; and rejected (0.3.1): bumping for docs-only commits, which is how the rule above was narrowed.

@@ -50,16 +50,25 @@ Use Conventional Commits with a scope and an imperative subject under 72 charact
 example `feat(statusbar): show live quotes`. PRs should state the change and motivation, link
 the issue, list manual verification steps, and attach a screenshot or GIF for UI changes.
 
+Every commit is authored by `bot66 <26666338+bot66@users.noreply.github.com>` and ends with one
+trailer, separated from the body by a blank line:
+
+```
+Co-authored-by: Codex <noreply@openai.com>
+```
+
 ## Agent-Specific Instructions
 
 - Update this file in place when structure, commands or conventions change; do not delete it.
 - Add new sources behind `QuoteProvider`, keyless by default, backed by fixtures.
 - Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion.
 - Run `npm run test:smoke` after touching `statusBar.ts`, `extension.ts`, `watchlist.ts` or the manifest.
-- Every change ships its own version: write the notes under `## Unreleased` in `CHANGELOG.md`, then
-  `npm run version:bump -- x.y.z` (MINOR for features and behaviour changes, PATCH for fixes, docs
-  and tooling). CI runs `npm run check:version` and fails on a reused version, a stale lockfile or a
-  missing section; `docs/release.md` holds the full rule.
+- Changes that can reach the `.vsix` (`src/` except `src/test/`, `media/`, `l10n/`, `package.json`,
+  `package-lock.json`, `esbuild.mjs`, `.vscodeignore`) ship their own version: write the notes under
+  `## Unreleased` in `CHANGELOG.md`, then `npm run version:bump -- x.y.z` (MINOR for features and
+  behaviour changes, PATCH for fixes). Documentation, CI, scripts and tests land without a bump. CI
+  runs `npm run check:version` and fails on a reused version, a stale lockfile or a missing section;
+  `docs/release.md` holds the full rule.
 - Releases are GitHub Release assets cut from `v*` tags. Do not add Visual Studio Marketplace
   publishing steps (Azure DevOps organisation, PAT or Entra credentials): the project ships through
   GitHub Releases only, and `docs/decisions.md` records why.

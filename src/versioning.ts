@@ -1,9 +1,9 @@
 /**
- * The versioning rule, as pure functions: every change ships its own version, so a repository
- * state is only shippable when the manifest, the lockfile and the changelog agree and when the
- * version has not been released by an earlier commit. `scripts/check-version.mjs` and
- * `scripts/bump-version.mjs` do the file and git I/O around this; `docs/release.md` states the
- * rule for humans.
+ * The versioning rule, as pure functions: a change that reaches the `.vsix` ships its own version,
+ * so a repository state is only shippable when the manifest, the lockfile and the changelog agree
+ * and when a change touching shipped paths has not reused a released version. Documentation and
+ * tooling may keep the released version. `scripts/check-version.mjs` and `scripts/bump-version.mjs`
+ * do the file and git I/O around this; `docs/release.md` states the rule for humans.
  */
 
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
@@ -21,6 +21,29 @@ export interface VersionState {
   releasedCommit?: string;
   /** Current commit, so the release commit itself is not reported as stale. */
   headCommit?: string;
+  /** Paths that differ from {@link VersionState.releasedCommit}; undefined when they could not be read. */
+  changedPaths?: string[];
+}
+
+/**
+ * Paths whose contents can reach the `.vsix`: the extension source (Vitest specs and fixtures stay
+ * out of the package), the packaged assets, the manifest, the lockfile, the packaging inputs.
+ * Everything else — documentation, agent notes, CI workflows, dev scripts, tests — lands without a
+ * release and rides along with the next shipped change.
+ */
+const SHIPPED_PATH_PATTERNS = [
+  /^src\/(?!test\/)/,
+  /^media\//,
+  /^l10n\//,
+  /^package\.json$/,
+  /^package-lock\.json$/,
+  /^esbuild\.mjs$/,
+  /^\.vscodeignore$/,
+];
+
+/** Whether a repository path can change the extension users install. */
+export function isShippedPath(path: string): boolean {
+  return SHIPPED_PATH_PATTERNS.some((pattern) => pattern.test(path));
 }
 
 /** Everything wrong with a state, in the order a human should fix it. */
@@ -46,10 +69,18 @@ export function versionProblems(state: VersionState): string[] {
     state.headCommit !== undefined &&
     state.releasedCommit !== state.headCommit
   ) {
-    problems.push(
-      `Version ${state.version} was already released by an earlier commit; every change ships its own ` +
-        'version, so bump it with npm run version:bump.',
-    );
+    const shipped = state.changedPaths?.filter(isShippedPath);
+    if (shipped === undefined) {
+      problems.push(
+        `Version ${state.version} was already released by an earlier commit and the changed files could not be ` +
+          'read; run the check with the full git history or bump it with npm run version:bump.',
+      );
+    } else if (shipped.length > 0) {
+      problems.push(
+        `Version ${state.version} was already released by an earlier commit and this change touches what ships ` +
+          `(${shipped.join(', ')}); bump it with npm run version:bump.`,
+      );
+    }
   }
   return problems;
 }

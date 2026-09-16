@@ -43,21 +43,28 @@ the icon.
 
 ## Versioning rule
 
-**One version per change.** Every commit that lands on `master` carries its own version number, and
-that version becomes a GitHub Release — nothing waits for "release day". Batching the bumps is how
-the manifest ended up on `0.2.0` while `package-lock.json` stayed on `0.1.0`, so the rule is
-enforced by `npm run check:version` in CI rather than by memory.
+**A release per source change.** Every change that can alter the extension users install carries its
+own version number, and that version becomes a GitHub Release — nothing waits for "release day".
+Documentation-only work lands without a bump and rides along with the next release:
+
+| Path | Needs its own version? |
+| --- | --- |
+| `src/` except `src/test/`, `media/`, `l10n/`, `package.json`, `package-lock.json`, `esbuild.mjs`, `.vscodeignore` | yes |
+| `AGENTS.md`, `README.md`, `CHANGELOG.md`, `docs/`, `.github/`, `scripts/`, `test/`, `src/test/` | no |
+
+`README.md` and `CHANGELOG.md` do travel inside the `.vsix`, but they are documentation: they cannot
+change what the extension does, so they never burn a version of their own.
+
+Batching the bumps is how the manifest ended up on `0.2.0` while `package-lock.json` stayed on
+`0.1.0`, so the rule is enforced by `npm run check:version` in CI rather than by memory.
 
 | Change | Bump | Example |
 | --- | --- | --- |
 | New feature, new provider, changed behaviour — including breaking changes, which must be called out in the notes | MINOR | `0.3.0` → `0.4.0` |
-| Bug fix, wording, translation, dependency, build or documentation-only change | PATCH | `0.3.0` → `0.3.1` |
+| Bug fix, wording, translation, dependency, packaging or build change that reaches the package | PATCH | `0.3.0` → `0.3.1` |
 | Steady state | MAJOR | reserved for `1.0.0`, once symbols and settings are settled |
 
-There is no exception for "docs only" commits: the repository has exactly one channel, so the
-version number is the receipt that a change has actually shipped.
-
-Steps for one change:
+Steps for one change that ships:
 
 1. Write the change and its notes under `## Unreleased` in `CHANGELOG.md`.
 2. `npm run version:bump -- <next>` — moves `package.json`, both `package-lock.json` version fields
@@ -69,12 +76,16 @@ Steps for one change:
 5. `release.yml` runs the same gates, packages the `.vsix` and publishes the Release with the
    changelog section as its notes.
 
+A change that does not ship skips the notes, the bump and the tag: commit and push it, and it lands
+under the version of the last release.
+
 `npm run check:version` fails when:
 
 - `package.json` and either `package-lock.json` version field disagree;
 - `CHANGELOG.md` has no `## <version>` section, or that section is empty;
-- `v<version>` already exists and points at an earlier commit, which means a new change reused a
-  released version.
+- `v<version>` already exists, points at an earlier commit, and the diff since that commit touches a
+  shipped path — the reuse of a released version. A docs-only commit on top of the released version
+  passes.
 
 The release workflow runs the same script with `--release`, because there the tag is *supposed* to
 exist at `HEAD`; it still checks the lockfile and the changelog.

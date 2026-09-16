@@ -1,7 +1,9 @@
-// Enforces the versioning rule from docs/release.md: every change ships its own version, so a
-// checkout is only shippable when package.json, package-lock.json and CHANGELOG.md agree and when
-// the version has not been released by an earlier commit. CI runs this on every push and pull
-// request; the release workflow runs it with --release, where the tag is expected to exist.
+// Enforces the versioning rule from docs/release.md: a change that can reach the .vsix ships its
+// own version, so a checkout is only shippable when package.json, package-lock.json and CHANGELOG.md
+// agree and when a change touching shipped paths has not reused a released version. Docs, agent
+// notes, CI, scripts and tests keep the released version until the next shipped change. CI runs
+// this on every push and pull request; the release workflow runs it with --release, where the tag is
+// expected to exist.
 //
 //   npm run check:version
 //   node scripts/check-version.mjs --release
@@ -48,15 +50,28 @@ const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
 const version = manifest.version;
 const releaseRun = process.argv.includes('--release');
 
+// On a release run the tag exists by definition and the workflow already matched it to the
+// manifest, so only the non-release check looks for an earlier commit that shipped this version.
+const releasedCommit = releaseRun ? undefined : git(['rev-list', '-n', '1', `v${version}`]);
+const headCommit = git(['rev-parse', 'HEAD']);
+
+/** Paths that HEAD changed since the released commit, or undefined when git cannot tell. */
+function changedPaths() {
+  if (releasedCommit === undefined || headCommit === undefined) {
+    return undefined;
+  }
+  const diff = git(['diff', '--name-only', releasedCommit, headCommit]);
+  return diff === undefined ? undefined : diff.split('\n').filter((line) => line.length > 0);
+}
+
 const problems = versionProblems({
   version,
   lockVersion: lock.version,
   lockRootVersion: lock.packages?.['']?.version,
   changelog: readFileSync('CHANGELOG.md', 'utf8'),
-  // On a release run the tag exists by definition and the workflow already matched it to the
-  // manifest, so only the non-release check looks for an earlier commit that shipped this version.
-  releasedCommit: releaseRun ? undefined : git(['rev-list', '-n', '1', `v${version}`]),
-  headCommit: git(['rev-parse', 'HEAD']),
+  releasedCommit,
+  headCommit,
+  changedPaths: changedPaths(),
 });
 
 if (problems.length > 0) {
