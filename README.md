@@ -83,6 +83,7 @@ symbol.
 | Command | What it does |
 | --- | --- |
 | `CodingView: Add Symbol` | Validates the input and appends it to `codingview.watchlist` |
+| `CodingView: Search Crypto` | Finds a coin by name or ticker and adds it as `crypto:gate:<PAIR>` |
 | `CodingView: Remove Symbol` | Picks an entry from the quick pick and removes it |
 | `CodingView: Refresh Now` | Fetches quotes immediately |
 | `CodingView: Show Watchlist` | Lists every symbol with its price; picking one rotates the status bar to it |
