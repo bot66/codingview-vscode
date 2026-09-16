@@ -9,6 +9,7 @@ document and the implementation disagree, trust the code and fix the document.
 | [architecture.md](architecture.md) | Layering, interfaces, refresh cycle, rendering, lifecycle |
 | [data-sources.md](data-sources.md) | Endpoints, wire formats, failover, alternative sources |
 | [configuration.md](configuration.md) | Symbol grammar, commands, settings, localisation |
+| [crypto-identity.md](crypto-identity.md) | Same-ticker crypto coins, source-qualified symbols, searching Gate for a coin |
 | [testing.md](testing.md) | Test strategy, coverage, manual F5 checklist |
 | [release.md](release.md) | Build pipeline, packaging, tag-driven GitHub releases |
 | [decisions.md](decisions.md) | Decisions with the alternatives that were rejected |

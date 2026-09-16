@@ -1,5 +1,6 @@
 # CodingView
 
+[![Release](https://img.shields.io/github/v/release/bot66/codingview-vscode?sort=semver)](https://github.com/bot66/codingview-vscode/releases/latest)
 [![CI](https://github.com/bot66/codingview-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/bot66/codingview-vscode/actions/workflows/ci.yml)
 
 Live stock and cryptocurrency quotes in the VS Code status bar, so you can follow your portfolio
@@ -17,8 +18,8 @@ loss because the entry carries a quantity and a cost. Each item reads `name code
 - **One glanceable item** that rotates through the watchlist, plus an optional pinned symbol that
   never moves.
 - **Four markets**: mainland China A-shares, Hong Kong, US stocks and crypto spot pairs.
-- **Keyless by default** (Tencent, Sina and Binance Vision). Add a free Finnhub key for US quotes if
-  you want a second opinion on that market.
+- **Keyless by default** (Tencent, Sina, Binance Vision and Gate.io). Add a free Finnhub key for US
+  quotes if you want a second opinion on that market.
 - **Profit and loss** for the entries where you record a quantity and average cost.
 - **Stale-aware**: keep the last price behind a `$(warning)` marker, with failover between sources
   and backoff on repeated failures.
@@ -37,6 +38,11 @@ published to the Visual Studio Marketplace: releases are GitHub Release assets, 
 is the only distribution channel. `npm run package` builds the same `.vsix` locally, and `F5` runs
 the extension from source.
 
+**Upgrading from 0.2.0:** uninstall the old build first (`code --uninstall-extension tgc.codingview`).
+That release shipped under the publisher id `tgc`, this one under `bot66`, and VS Code treats the two
+as separate extensions: with both enabled the duplicate command registration makes the new build fail
+to activate, so its commands look like they are missing. Reload the window afterwards.
+
 Then run **CodingView: Add Symbol** from the command palette and enter a symbol such as `cn:600519`.
 The status bar starts rotating through the watchlist every 5 seconds and refreshes prices every 60
 seconds.
@@ -48,7 +54,14 @@ seconds.
 | China A-shares | `cn:600519` | 6 digits; `sh`, `sz` and `bj` prefixes are derived from the code |
 | Hong Kong stocks | `hk:00700` | Up to 5 digits, zero-padded, so `hk:700` works too |
 | US stocks | `us:AAPL` | Dots are allowed for share classes, for example `us:BRK.B` |
-| Crypto | `crypto:BTCUSDT` | Any Binance spot pair |
+| Crypto | `crypto:BTCUSDT` | Binance first, Gate.io as the fallback |
+| Crypto, pinned to a source | `crypto:gate:LITUSDT` | For a coin whose ticker another listing also uses |
+
+Two coins can share a ticker: `crypto:LITUSDT` is a Binance listing, while Lighter trades on Gate.io
+(as `LIT_USDT` in Gate's own spelling). Run **CodingView: Search Crypto**, type `lighter`, and pick
+the coin from a list that shows its name, contract address and live price — the extension then writes
+the unambiguous `crypto:gate:LITUSDT` into the watchlist, spelled like every other pair. Full
+write-up: [docs/crypto-identity.md](docs/crypto-identity.md).
 
 ## Holdings
 
@@ -87,14 +100,14 @@ symbol.
 | `codingview.rotateIntervalSeconds` | `5` | Status bar rotation interval, minimum 2 |
 | `codingview.requestTimeoutSeconds` | `8` | How long a provider has to answer before the next one is tried, 2–60 |
 | `codingview.colorByDirection` | `true` | Green when up, red when down |
-| `codingview.provider` | `auto` | `auto`, `finnhub`, `tencent`, `sina` or `binance-vision` |
+| `codingview.provider` | `auto` | `auto`, `finnhub`, `tencent`, `sina`, `binance-vision` or `gate` |
 | `codingview.pinnedSymbol` | `''` | A symbol that stays visible instead of rotating |
 
 `auto` uses Finnhub when a key is stored, otherwise it starts at Tencent, falls back to Sina for
-stocks, and uses Binance Vision for crypto. A provider that fails twice in a row is skipped for the
-next three cycles, failures back off at 60, 120, 240 and then 300 seconds, and the last known prices
-stay on screen. Invalid entries never break the item: they are listed in the tooltip with a
-**Remove** link.
+stocks, and tries Binance Vision before Gate.io for crypto. A provider that fails twice in a row is
+skipped for the next three cycles, failures back off at 60, 120, 240 and then 300 seconds, and the
+last known prices stay on screen. Invalid entries never break the item: they are listed in the
+tooltip with a **Remove** link.
 
 ## Data sources and privacy
 
@@ -107,6 +120,7 @@ nothing is sent to any server owned by this project:
 - `qt.gtimg.cn` for A-shares, Hong Kong and US stocks (GBK encoded, batched up to 50 symbols per request)
 - `hq.sinajs.cn` as the stock fallback, which requires a `finance.sina.com.cn` Referer header
 - `data-api.binance.vision` for crypto (the `api.binance.com` main site is unreachable on some networks)
+- `api.gateio.ws` for crypto pairs pinned with `crypto:gate:<PAIR>` and for the coin search
 
 These are unofficial endpoints without an SLA, so fields may change. US quotes can be delayed by the
 source, and the tooltip says so. Suspended instruments show `Halted` instead of a price.

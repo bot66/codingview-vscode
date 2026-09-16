@@ -31,6 +31,9 @@ jobs:
           fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
 
+      - name: Check the versioning rule
+        run: node scripts/check-version.mjs --release
+
       - name: Lint
         run: npm run lint
 

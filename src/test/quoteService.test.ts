@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ProviderHealth, QuoteService, backoffSeconds } from '../quoteService';
 import type { Instrument, Market, Quote, QuoteProvider } from '../providers/types';
+import { parseInstrument } from '../symbols';
 
 function instrument(id: string, market: Market, code: string): Instrument {
   return { id, market, code };
@@ -137,6 +138,46 @@ describe('QuoteService.refresh', () => {
     expect(empty.calls).toHaveLength(1);
     expect(backup.calls).toEqual([[stocks]]);
     expect(outcome.quotes[0].source).toBe('sina');
+  });
+
+  test('routes each crypto instrument only to the providers that handle it', async () => {
+    const unqualified = parseInstrument('crypto:ETHUSDT');
+    const gateOnly = parseInstrument('crypto:gate:LIT_USDT');
+    // Binance resolves nothing for the unqualified pair, so Gate prices both instruments.
+    const binance = stubProvider('binance-vision', ['crypto'], async () => []);
+    binance.handles = (instrument) => instrument.source === undefined || instrument.source === 'binance';
+    const gate = stubProvider('gate', ['crypto'], async (instruments) =>
+      instruments.map((target) => quoteFor(target, 4.234, 'gate')),
+    );
+    gate.handles = (instrument) => instrument.source === undefined || instrument.source === 'gate';
+    const service = new QuoteService({ providers: [binance, gate] });
+
+    const outcome = await service.refresh([unqualified, gateOnly]);
+
+    expect(binance.calls).toEqual([[unqualified]]);
+    expect(gate.calls).toEqual([[unqualified, gateOnly]]);
+    expect(outcome.missing).toEqual([]);
+  });
+
+  test('does not count a provider with no handled instruments as failing', async () => {
+    const gateOnly = parseInstrument('crypto:gate:LIT_USDT');
+    const binance = stubProvider('binance-vision', ['crypto'], async () => []);
+    binance.handles = (instrument) => instrument.source === undefined || instrument.source === 'binance';
+    const gate = stubProvider('gate', ['crypto'], async (instruments) =>
+      instruments.map((target) => quoteFor(target, 4.234, 'gate')),
+    );
+    gate.handles = (instrument) => instrument.source === undefined || instrument.source === 'gate';
+    const health = new ProviderHealth({ threshold: 2, cooldownCycles: 3 });
+    const service = new QuoteService({ providers: [binance, gate], health });
+
+    for (let cycle = 0; cycle < 3; cycle += 1) {
+      const outcome = await service.refresh([gateOnly]);
+
+      expect(outcome.quotes.map((entry) => entry.source)).toEqual(['gate']);
+      expect(outcome.providerErrors).toEqual([]);
+      expect(outcome.skipped).toEqual([]);
+    }
+    expect(binance.calls).toEqual([]);
   });
 
   test('splits large watchlists into batches of 50', async () => {

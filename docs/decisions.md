@@ -40,6 +40,32 @@ the market from the code (`600519` vs `AAPL`), which needs heuristics that break
 tickers, and exposing provider-native codes (`sh600519`, `gb_aapl`), which leak implementation
 details into user configuration.
 
+## Crypto identity as `source:PAIR`
+
+A ticker is only unique inside one exchange, and crypto has many coins sharing one: `LITUSDT` is a
+0.743 Binance listing while Lighter trades as `LIT_USDT` on Gate for 4.234. `crypto:gate:LIT_USDT`
+therefore carries the source as part of the identity — short aliases (`binance`, `gate`) instead of
+the provider ids (`binance-vision`), the same reasoning as the market prefixes above. Unqualified
+`crypto:BTCUSDT` keeps its old meaning: Binance first, Gate only when Binance resolves nothing, so
+existing watchlists do not change source. Rejected: contract addresses as the identity
+(`crypto:eth:0x232c…`), which are unambiguous but unreadable in `settings.json` and would need an
+address → pair resolver that Gate's public API does not provide; CoinGecko ids, because
+`api.coingecko.com` was unreachable from the development sandbox and a parser without a real fixture
+cannot be trusted; and user-defined aliases in settings, which leave the "which exchange spells it
+how" homework with the user.
+
+## Gate as the second crypto source
+
+Gate's public API is keyless and carries what a bare pair cannot: the coin name and the contract, so
+**CodingView: Search Crypto** can offer `Lighter (LIT) · ETH 0x232c…` instead of asking the user to
+guess. It sits *after* Binance Vision in the failover order because Binance is the broader market
+and because `crypto:BTCUSDT` must keep resolving there. The same `QuoteProvider` interface carries
+it — the only addition is `handles(instrument)`, so a `crypto:gate:` entry never enters the Binance
+batch and an all-Gate watchlist cannot trip the Binance circuit breaker. Rejected: making Gate the
+first crypto source (it would silently move existing crypto entries to a different exchange), and a
+single "crypto search" provider separated from the quote path (two caches, two places to fix when
+Gate changes).
+
 ## Hong Kong through the existing stock providers
 
 `hk:00700` reuses Tencent and Sina, which already answer `hk00700` and `rt_hk00700` with a keyless
@@ -115,3 +141,18 @@ in parallel and racing them, which would multiply the request volume against uno
 and make "which source answered" non-deterministic, and rejected: doing nothing, which pays the
 request timeout again on every cycle while an endpoint is down. The cooldown is short enough that a
 provider coming back is picked up within a few minutes.
+
+## One version per change
+
+Every commit that lands on `master` bumps the version and becomes a GitHub Release: MINOR for a
+feature or a behaviour change, PATCH for a fix, wording or tooling change. The repository has one
+distribution channel, so the version number is the receipt that a change actually shipped — and
+batching the bumps until release day is how `package.json` reached `0.2.0` while
+`package-lock.json` stayed on `0.1.0`. The rule is therefore enforced rather than remembered:
+`scripts/check-version.mjs` (pure rules in `src/versioning.ts`, unit tested) fails CI when the three
+files disagree, when the changelog section is missing or empty, or when a new commit reuses a
+version that an earlier commit already released, and `scripts/bump-version.mjs` moves all three
+files in one command. Rejected: staying with release-day bumps (the drift above, plus `.vsix` files
+that cannot be told apart by version), and rejected: deriving the version from commit messages or
+timestamps, which would need a release toolchain and still would not make the `.vsix` distinguishable
+to a user installing it by hand.

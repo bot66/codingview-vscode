@@ -7,7 +7,7 @@
 | Activation | `src/extension.ts` | Wires providers, controller and commands; owns the output channel |
 | VS Code UI | `src/statusBar.ts`, `src/watchlist.ts` | Status bar item, timers, rendering, settings writes, quick pick flows |
 | Orchestration | `src/quoteService.ts` | Groups instruments per provider, batches, times out, fails over, reports outcomes |
-| Pure logic | `src/symbols.ts`, `src/format.ts`, `src/holdings.ts`, `src/settings.ts` | Symbol parsing, holdings and profit/loss, price/percent/status bar/tooltip formatting, setting defaults and clamping |
+| Pure logic | `src/symbols.ts`, `src/format.ts`, `src/holdings.ts`, `src/cryptoSearch.ts`, `src/versioning.ts`, `src/settings.ts` | Symbol parsing, holdings and profit/loss, price/percent/status bar/tooltip formatting, crypto search ranking, versioning rules, setting defaults and clamping |
 | I/O | `src/providers/*` | HTTP requests and payload parsing behind `QuoteProvider` |
 
 The dependency direction is one-way: UI → orchestration → providers → HTTP. Only `extension.ts`,
@@ -16,12 +16,15 @@ plain Node.
 
 ## Interfaces
 
-- `Instrument { id, market, code }` — `id` is the canonical `market:CODE` string, `market` is
-  `'cn' | 'us' | 'crypto'`.
+- `Instrument { id, market, code, source? }` — `id` is the canonical `market:CODE` string, `market`
+  is `'cn' | 'us' | 'crypto'`, and `source` (`'binance' | 'gate'`) is the crypto provider a pair was
+  written for, as in `crypto:gate:LITUSDT`.
 - `Quote { id, market, code, price, name?, prevClose?, change?, changePercent?, halted?, currency?, asOf?, source }`.
 - `Holding { id, quantity, cost }` and `ProfitLoss { value, cost, profit, percent? }` from `holdings.ts`.
-- `QuoteProvider { id, displayName, supports(market), fetch(instruments, signal) }` — returns one
-  quote per resolvable instrument, omits the rest, and throws on transport or payload failure.
+- `QuoteProvider { id, displayName, supports(market), handles?(instrument), fetch(instruments, signal) }`
+  — returns one quote per resolvable instrument, omits the rest, and throws on transport or payload
+  failure. `handles` narrows `supports` to the instruments a provider actually serves, so a
+  source-qualified pair never reaches the other crypto providers.
 - `HttpGetBytes(url, init) => Promise<Uint8Array>` — injectable, so specs replay recorded payloads
   and assert headers without touching the network.
 - `QuoteService.refresh(instruments) => { quotes, missing, providerErrors }`.
@@ -31,13 +34,14 @@ plain Node.
 1. `statusBar.ts` reads `codingview.*`, parses the watchlist (dropping invalid and duplicate
    entries) and prunes quotes belonging to removed symbols.
 2. `QuoteService.refresh` walks providers in order — Finnhub (only when a key is cached), Tencent,
-   Sina, Binance Vision. Each provider receives the still-unresolved instruments it `supports`.
+   Sina, Binance Vision, Gate. Each provider receives the still-unresolved instruments it `handles`.
 3. Instruments are chunked 50 at a time; every chunk runs under its own `AbortController` with the
    `codingview.requestTimeoutSeconds` timeout (8 s by default).
 4. A provider that throws is recorded in `providerErrors` and its instruments stay pending for the
    next provider. A provider that returns fewer quotes than requested also leaves the remainder
    pending, so an unknown code is retried against the fallback source. A provider that answers with
-   nothing at all counts as a failure too.
+   nothing at all counts as a failure too — unless `handles` left it without any instrument, which
+   is not a failure but a provider that simply has nothing to do this cycle.
 5. Arriving quotes merge into the controller's map; instruments that stay pending become `missing`
    and render as `--`.
 6. `ProviderHealth` counts consecutive failures per provider and, after the second one, skips that
@@ -57,8 +61,9 @@ plain Node.
 - Text: `$(graph) 贵州茅台 600519 1277.96 +0.22%` — `Quote.name` in front of the configured code, so
   the item stays readable while the code still identifies the listing. Before the first quote there
   is no name, and the item reads `$(graph) 600519 --`; a cycle that was not clean prefixes
-  `$(warning)`. Crypto pairs have no display name, so Binance Vision uses the base asset (`BTC
-  BTCUSDT 78494.01 +1.73%`). A suspended instrument renders as `$(graph) 贵州茅台 600519 -- 停牌` from
+  `$(warning)`. Binance Vision publishes no coin names, so its crypto quotes use the base asset
+  (`BTC BTCUSDT 78494.01 +1.73%`), while a Gate pair carries the real name
+  (`Lighter LITUSDT 4.2140 -0.40%`). A suspended instrument renders as `$(graph) 贵州茅台 600519 -- 停牌` from
   `Quote.halted`, so it is not confused with an unknown code. An empty watchlist shows a clickable
   `$(graph) Add a symbol`.
 - Colour: `ThemeColor('charts.green')` when the change is positive, `charts.red` when negative,

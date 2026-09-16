@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 
-import { parseInstrument, watchlistEntrySymbol } from './symbols';
+import type { CryptoCandidate } from './cryptoSearch';
+import { formatChangePercent, formatPrice } from './format';
+import type { GateCatalog } from './providers/gate';
+import type { Instrument } from './providers/types';
+import { compactCryptoPair, parseInstrument, watchlistEntrySymbol } from './symbols';
 
 const SECTION = 'codingview';
 const WATCHLIST_KEY = 'watchlist';
@@ -89,6 +93,11 @@ export async function addSymbol(): Promise<void> {
   }
 
   const instrument = parseInstrument(input);
+  await addToWatchlist(instrument);
+}
+
+/** Adds one canonical id, telling the user when it is already tracked. */
+async function addToWatchlist(instrument: Instrument): Promise<void> {
   const watchlist = readWatchlist();
   if (watchlist.some((entry) => canonicalId(entry) === instrument.id)) {
     void vscode.window.showInformationMessage(vscode.l10n.t('{0} is already in the watchlist.', instrument.id));
@@ -97,6 +106,64 @@ export async function addSymbol(): Promise<void> {
 
   await writeWatchlist([...watchlist, instrument.id]);
   void vscode.window.showInformationMessage(vscode.l10n.t('Added {0} to the watchlist.', instrument.id));
+}
+
+/**
+ * Turns Gate's currency catalogue into a pick list, so a small coin is found by name instead of
+ * guessed from a ticker that another coin also uses.
+ */
+export async function searchCrypto(catalog: GateCatalog): Promise<void> {
+  const query = await vscode.window.showInputBox({
+    prompt: vscode.l10n.t('Search a cryptocurrency by name or ticker'),
+    placeHolder: vscode.l10n.t('Example: lighter, LIT'),
+  });
+  if (query === undefined || query.trim().length === 0) {
+    return;
+  }
+
+  let matches: CryptoCandidate[];
+  try {
+    matches = await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Searching Gate.io…') },
+      () => catalog.search(query),
+    );
+  } catch (error) {
+    void vscode.window.showErrorMessage(
+      vscode.l10n.t('Could not reach Gate.io: {0}', error instanceof Error ? error.message : String(error)),
+    );
+    return;
+  }
+  if (matches.length === 0) {
+    void vscode.window.showInformationMessage(vscode.l10n.t('No cryptocurrency matched "{0}".', query.trim()));
+    return;
+  }
+
+  const items = matches.map((match) => ({
+    label: `${match.name} (${match.currency})`,
+    description: `${formatPrice(match.price, 'crypto')} USDT ${formatChangePercent(match.changePercent)}`,
+    detail: [
+      match.chain && match.address ? `${match.chain} ${match.address}` : undefined,
+      `crypto:gate:${compactCryptoPair(match.pair)}`,
+    ]
+      .filter((part): part is string => part !== undefined)
+      .join(' · '),
+  }));
+  const picked = await vscode.window.showQuickPick(items, {
+    title: vscode.l10n.t('Pick a cryptocurrency to add'),
+  });
+  if (picked === undefined) {
+    return;
+  }
+
+  try {
+    await addToWatchlist(parseInstrument(`crypto:gate:${matches[items.indexOf(picked)].pair}`));
+  } catch (error) {
+    // The code came from Gate, so a rejected one is a grammar gap, not a user mistake: say which
+    // one failed instead of leaving an unhandled rejection in the log.
+    void vscode.window.showErrorMessage(
+      vscode.l10n.t('Could not add {0}: {1}', picked.label, error instanceof Error ? error.message : String(error)),
+    );
+  }
 }
 
 export async function removeSymbol(): Promise<void> {

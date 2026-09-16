@@ -15,7 +15,7 @@ developer can follow their portfolio without leaving the editor.
 - An optional pinned item next to the rotation for one symbol that should never scroll away.
 - Optional `quantity` and `cost` per entry, giving profit and loss in the status bar and tooltip.
 - Markets: mainland China A-shares, Hong Kong stocks, US stocks and crypto spot pairs.
-- Keyless quote sources: Tencent (preferred), Sina (fallback) and Binance Vision, plus an optional
+- Keyless quote sources: Tencent (preferred), Sina (fallback), Binance Vision and Gate.io for crypto, plus an optional
   keyed Finnhub provider for US symbols.
 - Refresh every 60 seconds with exponential backoff; stale prices stay visible.
 

@@ -91,6 +91,61 @@ describe('parseBinanceVisionResponse', () => {
 });
 
 describe('createBinanceVisionProvider', () => {
+  test('skips a pair that is qualified for another source', async () => {
+    const urls: string[] = [];
+    const provider = createBinanceVisionProvider({
+      httpGet: async (url) => {
+        urls.push(url);
+        return new TextEncoder().encode(fixture('binance-ticker-24hr.json'));
+      },
+    });
+
+    const quotes = await provider.fetch([parseInstrument('crypto:gate:LIT_USDT')]);
+
+    expect(quotes).toEqual([]);
+    expect(urls).toEqual([]);
+  });
+
+  test('isolates an unknown symbol instead of failing the whole batch', async () => {
+    const requests: string[] = [];
+    const provider = createBinanceVisionProvider({
+      httpGet: async (url) => {
+        const decoded = decodeURIComponent(url);
+        requests.push(decoded);
+        if (decoded.includes('"BTCUSDT"') && !decoded.includes('NOPEUSDT')) {
+          return new TextEncoder().encode(
+            '[{"symbol":"BTCUSDT","lastPrice":"78372.01","priceChange":"1169.25","priceChangePercent":"1.515","prevClosePrice":"77202.76"}]',
+          );
+        }
+        return new TextEncoder().encode('{"code":-1121,"msg":"Invalid symbol."}');
+      },
+    });
+
+    const quotes = await provider.fetch([
+      parseInstrument('crypto:BTCUSDT'),
+      parseInstrument('crypto:NOPEUSDT'),
+    ]);
+
+    expect(quotes.map((quote) => quote.id)).toEqual(['crypto:BTCUSDT']);
+    expect(requests[0]).toContain('["BTCUSDT","NOPEUSDT"]');
+    expect(requests.slice(1)).toEqual(['["BTCUSDT"]', '["NOPEUSDT"]'].map((symbols) => expect.stringContaining(symbols)));
+  });
+
+  test('rethrows a transport failure instead of retrying every symbol', async () => {
+    let calls = 0;
+    const provider = createBinanceVisionProvider({
+      httpGet: async () => {
+        calls += 1;
+        throw new Error('socket hang up');
+      },
+    });
+
+    await expect(
+      provider.fetch([parseInstrument('crypto:BTCUSDT'), parseInstrument('crypto:ETHUSDT')]),
+    ).rejects.toThrowError('socket hang up');
+    expect(calls).toBe(1);
+  });
+
   test('requests the watchlist as a JSON array of symbols', async () => {
     const urls: string[] = [];
     const provider = createBinanceVisionProvider({

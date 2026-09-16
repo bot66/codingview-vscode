@@ -2,6 +2,7 @@
   "extension.displayName": "CodingView",
   "extension.description": "Show live stock and cryptocurrency prices in the status bar while you code.",
   "command.addSymbol": "CodingView: Add Symbol",
+  "command.searchCrypto": "CodingView: Search Crypto",
   "command.removeSymbol": "CodingView: Remove Symbol",
   "command.refreshNow": "CodingView: Refresh Now",
   "command.showList": "CodingView: Show Watchlist",
@@ -18,5 +19,5 @@
   "config.requestTimeoutSeconds": "How long to wait for a quote provider before failing over, in seconds (minimum 2, maximum 60).",
   "config.pinnedSymbol": "A symbol that stays in its own status bar item instead of rotating, for example `cn:600519`. Empty means no pin.",
   "config.colorByDirection": "Color the status bar item green when the current symbol is up and red when it is down.",
-  "config.provider": "Quote source. `auto` tries finnhub when a key is stored, then tencent, then sina for stocks, and binance-vision for crypto."
+  "config.provider": "Quote source. `auto` tries finnhub when a key is stored, then tencent, then sina for stocks, and binance-vision followed by gate for crypto."
 }

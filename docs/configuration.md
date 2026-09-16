@@ -9,19 +9,23 @@ Every watchlist entry is `<market>:<code>`.
 | `cn` | 6 digits | `cn:600519` | Exchange prefix derived from the code |
 | `hk` | up to 5 digits | `hk:00700`, `hk:700` | Zero-padded to five digits on save |
 | `us` | Letter, then up to 9 letters, digits, `.` or `-` | `us:AAPL`, `us:BRK.B` | Upper-cased on save |
-| `crypto` | 2–20 of `A-Z0-9` | `crypto:BTCUSDT` | Any Binance spot pair; upper-cased on save |
+| `crypto` | 2–24 characters except whitespace, `:`, `/`, `\`, optionally prefixed by a source | `crypto:BTCUSDT`, `crypto:gate:LITUSDT`, `crypto:gate:牛来USDT` | Unqualified pairs try Binance then Gate; `binance:`/`gate:` pin one source; ASCII is upper-cased, Gate's `LIT_USDT` spelling is accepted and stored as `LITUSDT` |
 
 Duplicates are compared on the canonical `market:CODE` id, so `us:aapl` and `us:AAPL` are one
-entry, as are `hk:700` and `hk:00700`. Invalid entries never break the extension: they are skipped,
+entry, as are `hk:700` and `hk:00700`, and `crypto:gate:LIT_USDT` is the same entry as
+`crypto:gate:LITUSDT`. Crypto ids keep the source, so `crypto:LITUSDT` and `crypto:gate:LITUSDT` are
+two entries — see [crypto-identity.md](crypto-identity.md) for why the same ticker can be two
+different coins. Invalid entries never break the extension: they are skipped,
 logged to the output channel, listed in the status bar tooltip with their validation message and
 offered a **Remove** link that deletes that raw entry from the settings.
 
 The status bar item reads `name code price change` for the current symbol, so `cn:159605` renders as
 `中概互联网ETF广发 159605 0.748 +0.00%`. Before the first quote arrives there is no name yet and the
 item shows just the code. Crypto pairs have no display name, so the base asset plays that role:
-`crypto:BTCUSDT` reads `BTC BTCUSDT 78494.01 +1.73%`. The canonical `market:CODE` also stays in the
-first tooltip column and in the **CodingView: Show Watchlist** quick pick, which is how two
-instruments with similar names stay apart.
+`crypto:BTCUSDT` reads `BTC BTCUSDT 78494.01 +1.73%`, while a Gate pair carries the real coin name:
+`crypto:gate:LITUSDT` reads `Lighter LITUSDT 4.2340 -3.11%`. The canonical `market:CODE` also
+stays in the first tooltip column and in the **CodingView: Show Watchlist** quick pick, which is how
+two instruments with similar names stay apart.
 
 ## Holdings
 
@@ -48,7 +52,8 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `cn:6005` | China A-share codes must be 6 digits, for example cn:600519. |
 | `hk:123456` | Hong Kong codes are up to 5 digits, for example hk:00700. |
 | `us:123` | US tickers look like us:AAPL or us:BRK.B. |
-| `crypto:B` | Crypto pairs look like crypto:BTCUSDT. |
+| `crypto:B` | Crypto pairs look like crypto:BTCUSDT or crypto:gate:LITUSDT. |
+| `crypto:okx:BTCUSDT` | Unsupported crypto source "okx". Available sources: binance, gate. |
 | `cn:700001` | Cannot infer the exchange for code "700001". |
 
 ## Commands
@@ -56,6 +61,7 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | Command | Behaviour |
 | --- | --- |
 | `codingview.addSymbol` | Input box with live validation, then appends to the watchlist |
+| `codingview.searchCrypto` | Asks Gate for coins matching a name or ticker, then adds the picked `crypto:gate:<PAIR>` |
 | `codingview.removeSymbol` | Quick pick of current entries, then removes the selection |
 | `codingview.refreshNow` | Schedules an immediate refresh |
 | `codingview.showList` | Quick pick of every symbol with its quote; picking one rotates to it |
@@ -74,13 +80,14 @@ Validation messages, asserted in `src/test/symbols.test.ts`:
 | `codingview.rotateIntervalSeconds` | number | `5` | Minimum 2 |
 | `codingview.requestTimeoutSeconds` | number | `8` | Minimum 2, maximum 60 |
 | `codingview.colorByDirection` | boolean | `true` | Green up, red down |
-| `codingview.provider` | string | `auto` | `auto`, `finnhub`, `tencent`, `sina`, `binance-vision` |
+| `codingview.provider` | string | `auto` | `auto`, `finnhub`, `tencent`, `sina`, `binance-vision`, `gate` |
 | `codingview.pinnedSymbol` | string | `''` | One entry that never rotates; empty means unpinned |
 
 All settings use `scope: window`, so a folder can override the list for one workspace.
-`codingview.provider: auto` walks Finnhub (only when a key is stored), then Tencent, Sina and
-Binance Vision; a pinned id restricts the cycle to that provider (an unknown id silently falls back
-to `auto`).
+`codingview.provider: auto` walks Finnhub (only when a key is stored), then Tencent, Sina, Binance
+Vision and Gate; a pinned id restricts the cycle to that provider (an unknown id silently falls back
+to `auto`). A symbol that names its own source is only offered to that provider, whichever mode is
+set.
 
 ## API keys
 

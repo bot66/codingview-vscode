@@ -15,18 +15,24 @@ Two rules keep the suite honest:
   decoded name, while the other specs run the already-decoded text through the parsers.
   Two fixtures are exceptions and say so by name: `tencent-halted-synthetic.txt` is the real
   A-share row with the price fields zeroed, and `finnhub-quote.json` follows the documented
-  response shape because the endpoint needs a key. `finnhub-error.json` is a real 401 body.
+  response shape because the endpoint needs a key. `finnhub-error.json` is a real 401 body. The two
+  Gate catalogue fixtures (`gate-catalog-currencies.json`, `gate-catalog-tickers.json`) are the real
+  rows for `LIT`, `BTC`, `LITE3L`, `UROLITHINA` and `LITE_OLD` lifted out of the live `/spot/currencies`
+  and `/spot/tickers` payloads, whose full bodies are ≈2.1 MB and ≈542 KB.
 
 ## Coverage
 
 | Spec | Tests | Covers |
 | --- | --- | --- |
-| `symbols.test.ts` | 25 | Prefix parsing, upper-casing, validation messages, duplicate handling, the full `sh`/`sz`/`bj` prefix table, provider symbol building |
+| `symbols.test.ts` | 43 | Prefix parsing, upper-casing, source-qualified crypto pairs, validation messages, duplicate handling, the full `sh`/`sz`/`bj` prefix table, crypto pair splitting, provider symbol building |
 | `format.test.ts` | 9 | Crypto vs stock price precision, signed percent formatting, up/down/flat direction, status bar text, tooltip markdown |
-| `quoteService.test.ts` | 8 | Market routing, failover, retrying symbols a provider resolved without data, 50-symbol batching, the 8s timeout via fake timers, unresolved symbols, pinned provider |
+| `quoteService.test.ts` | 16 | Market routing, failover, retrying symbols a provider resolved without data, `handles` routing for source-qualified pairs, 50-symbol batching, the 8s timeout via fake timers, unresolved symbols, pinned provider |
+| `cryptoSearch.test.ts` | 9 | Candidate ranking (exact ticker, ticker prefix, name prefix, name substring), USDT market and delisting filters, contract selection, result cap |
+| `versioning.test.ts` | 14 | Version rules: manifest/lockfile/changelog agreement, missing or empty changelog sections, reused versions, version ordering, the two version rewrites, heading rename |
 | `providers.tencent.test.ts` | 6 | A-share and US field mapping, zero-priced stub rows, single batched request URL, skipped markets, GBK decoding in the provider |
 | `providers.sina.test.ts` | 4 | A-share layout with derived change, `gb_` layout, empty payloads, the required `Referer` header |
-| `providers.binanceVision.test.ts` | 4 | Batch parsing, `-1121` error mapping, zero-price rows, the JSON-array request URL |
+| `providers.binanceVision.test.ts` | 8 | Batch parsing, `-1121` error mapping, per-symbol isolation of an unknown symbol, zero-price rows, the JSON-array request URL, source filtering |
+| `providers.gate.test.ts` | 13 | Ticker parsing with derived change, coin names and the per-currency cache, unknown pairs as unresolved, bare-pair rewriting, the catalogue cache, its retry and its timeout, source filtering |
 | `http.test.ts` | 5 | GBK decoding, `defaultHttpGetBytes` success path, header and signal forwarding, `HttpError` on a non-2xx response |
 
 Run them with `npm test`, or `npm run test:watch` while iterating.
@@ -38,8 +44,9 @@ real endpoints, printing the resolved quotes, the unresolved symbols and the pro
 it after touching a parser or a symbol builder, and after capturing new fixtures:
 
 ```bash
-npm run verify:live                          # cn:600519, hk:00700, us:AAPL, crypto:BTCUSDT
+npm run verify:live                          # the four stock/crypto samples plus crypto:gate:LITUSDT
 npm run verify:live -- cn:000001 us:BRK.B    # any watchlist entries
+npm run verify:live -- crypto:LITUSDT crypto:gate:LITUSDT    # the same ticker on two sources
 npm run verify:live -- --provider=sina --timeout=20
 ```
 

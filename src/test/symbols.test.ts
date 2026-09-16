@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
-import { exchangePrefix, parseInstrument, parseWatchlist, sinaSymbol, tencentSymbol } from '../symbols';
+import {
+  compactCryptoPair,
+  exchangePrefix,
+  parseInstrument,
+  parseWatchlist,
+  sinaSymbol,
+  splitCryptoPair,
+  tencentSymbol,
+} from '../symbols';
 
 describe('parseInstrument', () => {
   test('parses an A-share code with the cn prefix', () => {
@@ -13,6 +21,72 @@ describe('parseInstrument', () => {
 
   test('uppercases crypto pairs', () => {
     expect(parseInstrument('crypto:btcusdt').id).toBe('crypto:BTCUSDT');
+  });
+
+  test('leaves an unqualified crypto pair without a source', () => {
+    expect(parseInstrument('crypto:BTCUSDT')).toEqual({
+      id: 'crypto:BTCUSDT',
+      market: 'crypto',
+      code: 'BTCUSDT',
+    });
+  });
+
+  test('parses a crypto pair qualified by its source', () => {
+    expect(parseInstrument('crypto:gate:LIT_USDT')).toEqual({
+      id: 'crypto:gate:LITUSDT',
+      market: 'crypto',
+      code: 'LITUSDT',
+      source: 'gate',
+    });
+    expect(parseInstrument('crypto:binance:BTCUSDT').id).toBe('crypto:binance:BTCUSDT');
+  });
+
+  test('normalizes the source and the pair regardless of case', () => {
+    expect(parseInstrument('crypto:Gate:lit_usdt').id).toBe('crypto:gate:LITUSDT');
+  });
+
+  test('keeps the separator when the base code itself has one', () => {
+    expect(parseInstrument('crypto:gate:LITE_OLD_USDT').id).toBe('crypto:gate:LITE_OLD_USDT');
+  });
+
+  test('spells a qualified pair the same way with and without the separator', () => {
+    expect(parseInstrument('crypto:gate:LIT_USDT').id).toBe(parseInstrument('crypto:gate:LITUSDT').id);
+  });
+
+  test('leaves an unqualified pair exactly as written', () => {
+    expect(parseInstrument('crypto:LIT_USDT').id).toBe('crypto:LIT_USDT');
+    expect(parseInstrument('crypto:BTCUSDT').id).toBe('crypto:BTCUSDT');
+  });
+
+  test('rejects a crypto source that is not a known one', () => {
+    expect(() => parseInstrument('crypto:okx:BTCUSDT')).toThrowError('Unsupported crypto source');
+  });
+
+  test('rejects a crypto pair with characters outside the grammar', () => {
+    expect(() => parseInstrument('crypto:gate:LIT/USDT')).toThrowError('Crypto pairs look like');
+  });
+
+  test('accepts a Gate pair whose ticker is not ASCII', () => {
+    expect(parseInstrument('crypto:gate:牛来_USDT')).toEqual({
+      id: 'crypto:gate:牛来USDT',
+      market: 'crypto',
+      code: '牛来USDT',
+      source: 'gate',
+    });
+  });
+
+  test('accepts the punctuation Gate uses in ticker codes', () => {
+    expect(parseInstrument('crypto:gate:kfc!3_usdt').code).toBe('KFC!3USDT');
+    expect(parseInstrument('crypto:gate:skm-cdy_usdt').code).toBe('SKM-CDYUSDT');
+  });
+
+  test('rejects a crypto pair that keeps a separator or a slash', () => {
+    expect(() => parseInstrument('crypto:gate:BTC:USDT')).toThrowError('Crypto pairs look like');
+    expect(() => parseInstrument('crypto:gate:BTC\\USDT')).toThrowError('Crypto pairs look like');
+  });
+
+  test('strips whitespace inside a pair, the way the other markets do', () => {
+    expect(parseInstrument('crypto:gate:牛来 USDT').code).toBe('牛来USDT');
   });
 
   test('tolerates surrounding whitespace', () => {
@@ -46,6 +120,22 @@ describe('parseInstrument', () => {
 });
 
 describe('parseWatchlist', () => {
+  test('keeps the same ticker from two sources as two instruments', () => {
+    const result = parseWatchlist(['crypto:LITUSDT', 'crypto:gate:LIT_USDT']);
+
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual([
+      'crypto:LITUSDT',
+      'crypto:gate:LITUSDT',
+    ]);
+    expect(result.invalid).toEqual([]);
+  });
+
+  test('treats the two spellings of a Gate pair as one entry', () => {
+    const result = parseWatchlist(['crypto:gate:LITUSDT', 'crypto:gate:LIT_USDT']);
+
+    expect(result.instruments.map((instrument) => instrument.id)).toEqual(['crypto:gate:LITUSDT']);
+  });
+
   test('drops duplicates and reports invalid entries', () => {
     const { instruments, invalid } = parseWatchlist(['cn:600519', 'cn:600519', 'us:aapl', 'us:AAPL', '600519']);
 
@@ -136,6 +226,32 @@ describe('exchangePrefix', () => {
 });
 
 describe('provider symbols', () => {
+  test('compacts a Gate pair into the Binance spelling', () => {
+    expect(compactCryptoPair('LIT_USDT')).toBe('LITUSDT');
+    expect(compactCryptoPair('牛来_USDT')).toBe('牛来USDT');
+    expect(compactCryptoPair('BTCUSDT')).toBe('BTCUSDT');
+  });
+
+  test('leaves a pair whose base has an underscore alone', () => {
+    expect(compactCryptoPair('LITE_OLD_USDT')).toBe('LITE_OLD_USDT');
+    expect(compactCryptoPair('HOLDSTATION_OLD1_USDT')).toBe('HOLDSTATION_OLD1_USDT');
+  });
+
+  test('leaves a pair with an unknown quote asset alone', () => {
+    expect(compactCryptoPair('FOO_DAI')).toBe('FOO_DAI');
+  });
+
+  test('splits a crypto pair into its base and quote asset', () => {
+    expect(splitCryptoPair('BTCUSDT')).toEqual({ base: 'BTC', quote: 'USDT' });
+    expect(splitCryptoPair('ETHBTC')).toEqual({ base: 'ETH', quote: 'BTC' });
+    expect(splitCryptoPair('LIT_USDT')).toEqual({ base: 'LIT', quote: 'USDT' });
+  });
+
+  test('refuses to split a pair without a known quote asset', () => {
+    expect(splitCryptoPair('NOPE')).toBeUndefined();
+    expect(splitCryptoPair('LIT_NOPE')).toBeUndefined();
+  });
+
   test('builds Tencent symbols', () => {
     expect(tencentSymbol(parseInstrument('cn:600519'))).toBe('sh600519');
     expect(tencentSymbol(parseInstrument('us:aapl'))).toBe('usAAPL');

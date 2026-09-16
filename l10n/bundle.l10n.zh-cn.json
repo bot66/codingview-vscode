@@ -1,6 +1,13 @@
 {
   "Add a symbol to the watchlist": "添加一个关注标的",
   "Example: cn:600519, us:AAPL, crypto:BTCUSDT": "例如：cn:600519、us:AAPL、crypto:BTCUSDT",
+  "Search a cryptocurrency by name or ticker": "按币名或 ticker 搜索加密货币",
+  "Example: lighter, LIT": "例如：lighter、LIT",
+  "Searching Gate.io…": "正在搜索 Gate.io…",
+  "Could not reach Gate.io: {0}": "无法访问 Gate.io：{0}",
+  "No cryptocurrency matched \"{0}\".": "没有匹配“{0}”的加密货币。",
+  "Pick a cryptocurrency to add": "选择要添加的加密货币",
+  "Could not add {0}: {1}": "无法添加 {0}：{1}",
   "Invalid symbol: {0}": "标的不合法：{0}",
   "Added {0} to the watchlist.": "已把 {0} 加入关注列表。",
   "{0} is already in the watchlist.": "{0} 已在关注列表中。",

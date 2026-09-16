@@ -11,6 +11,8 @@
 | `npm test` | Vitest unit suite |
 | `npm run package` | `vsce package --no-dependencies` |
 | `npm run test:smoke` | compiles `test/smoke` and runs the extension-host suite (`xvfb-run` on Linux) |
+| `npm run check:version` | enforces the versioning rule below: manifest, lockfile and changelog agree, and the version is not already released |
+| `npm run version:bump -- <version>` | moves `package.json`, both `package-lock.json` version fields and the `## Unreleased` heading to `<version>` |
 
 esbuild emits CommonJS for Node 18 with `vscode` marked external, minifies for builds, keeps a
 source map, and inlines every other dependency — so the `.vsix` needs no `node_modules`.
@@ -39,22 +41,68 @@ the `.vsix` from the release page and install it with `code --install-extension 
 registration. `repository`, `bugs` and `icon` stay because the README links to them and VS Code shows
 the icon.
 
+## Versioning rule
+
+**One version per change.** Every commit that lands on `master` carries its own version number, and
+that version becomes a GitHub Release — nothing waits for "release day". Batching the bumps is how
+the manifest ended up on `0.2.0` while `package-lock.json` stayed on `0.1.0`, so the rule is
+enforced by `npm run check:version` in CI rather than by memory.
+
+| Change | Bump | Example |
+| --- | --- | --- |
+| New feature, new provider, changed behaviour — including breaking changes, which must be called out in the notes | MINOR | `0.3.0` → `0.4.0` |
+| Bug fix, wording, translation, dependency, build or documentation-only change | PATCH | `0.3.0` → `0.3.1` |
+| Steady state | MAJOR | reserved for `1.0.0`, once symbols and settings are settled |
+
+There is no exception for "docs only" commits: the repository has exactly one channel, so the
+version number is the receipt that a change has actually shipped.
+
+Steps for one change:
+
+1. Write the change and its notes under `## Unreleased` in `CHANGELOG.md`.
+2. `npm run version:bump -- <next>` — moves `package.json`, both `package-lock.json` version fields
+   and renames the changelog heading in one step. It refuses to run without pending notes and
+   refuses a version that is not greater than the current one.
+3. `npm run lint && npm test && npm run compile`, plus `npm run test:smoke` when the change touches
+   the VS Code layer or the manifest, and `npm run check:version`.
+4. Commit, then tag and push: `git tag v<version> && git push origin master v<version>`.
+5. `release.yml` runs the same gates, packages the `.vsix` and publishes the Release with the
+   changelog section as its notes.
+
+`npm run check:version` fails when:
+
+- `package.json` and either `package-lock.json` version field disagree;
+- `CHANGELOG.md` has no `## <version>` section, or that section is empty;
+- `v<version>` already exists and points at an earlier commit, which means a new change reused a
+  released version.
+
+The release workflow runs the same script with `--release`, because there the tag is *supposed* to
+exist at `HEAD`; it still checks the lockfile and the changelog.
+
 ### Cutting a release
 
-1. Bump `version` in `package.json` and add a matching `## <version>` section to `CHANGELOG.md` —
-   that section becomes the release notes, and the workflow fails without it.
+1. Follow the versioning rule above: notes under `## Unreleased`, then
+   `npm run version:bump -- <version>`. The renamed section becomes the release notes, and the
+   workflow fails without it.
 2. Verify locally: `npm run lint && npm test && npm run compile && npm run test:smoke`, then
    `npm run package` and install the `.vsix` on a scratch profile.
 3. Commit the bump, tag it and push the tag:
 
    ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
+   git tag v0.3.0
+   git push origin master v0.3.0
    ```
 
 4. `.github/workflows/release.yml` then checks that the tag matches `package.json`, runs the same
    gates as CI, packages the extension and creates the GitHub Release with the `.vsix` attached and
    the changelog section as its notes. Re-running the failed job is enough if a step trips.
+
+When the extension identifier changes — `publisher` or `name` in `package.json`, for example the
+`tgc.codingview` → `bot66.codingview` rename in 0.3.0 — VS Code treats the result as a *new*
+extension and keeps the old one installed and enabled. Both then register the same command ids, the
+second activation aborts with `command 'codingview.addSymbol' already exists`, and the new commands
+look missing. The release notes must tell users to uninstall the previous build first, so verify the
+upgrade path on a scratch profile with the previous `.vsix` installed before tagging.
 
 There is no pre-release channel: users on `master` get unreleased behaviour only by building the
 `.vsix` themselves.

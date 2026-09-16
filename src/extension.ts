@@ -1,10 +1,18 @@
 import * as vscode from 'vscode';
 
 import { formatChangePercent, formatPrice } from './format';
-import { createDefaultProviders } from './providers';
+import { GateCatalog, createDefaultProviders } from './providers';
 import { StatusBarController } from './statusBar';
 import { parseInstrument, watchlistEntrySymbol } from './symbols';
-import { addSymbol, pinSymbol, readWatchlist, removeSymbol, removeSymbolEntry, setHolding } from './watchlist';
+import {
+  addSymbol,
+  pinSymbol,
+  readWatchlist,
+  removeSymbol,
+  removeSymbolEntry,
+  searchCrypto,
+  setHolding,
+} from './watchlist';
 
 const FINNHUB_SECRET_KEY = 'codingview.finnhubApiKey';
 
@@ -12,8 +20,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('CodingView');
   // The keyed provider asks for its secret synchronously, so `SecretStorage` is mirrored here.
   const finnhubApiKey = { current: undefined as string | undefined };
+  // One cache for the Gate provider and the search command, so a search warms the quote path.
+  const gateCatalog = new GateCatalog();
   const controller = new StatusBarController(
-    createDefaultProviders({ finnhubApiKey: () => finnhubApiKey.current }),
+    createDefaultProviders({ finnhubApiKey: () => finnhubApiKey.current, gateCatalog }),
     output,
   );
 
@@ -25,6 +35,7 @@ export function activate(context: vscode.ExtensionContext): void {
     output,
     controller,
     vscode.commands.registerCommand('codingview.addSymbol', () => addSymbol()),
+    vscode.commands.registerCommand('codingview.searchCrypto', () => searchCrypto(gateCatalog)),
     vscode.commands.registerCommand('codingview.removeSymbol', () => removeSymbol()),
     vscode.commands.registerCommand('codingview.removeSymbolEntry', (entry: string) => removeSymbolEntry(entry)),
     vscode.commands.registerCommand('codingview.pinSymbol', () => pinSymbol()),

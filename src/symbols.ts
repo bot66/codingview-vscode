@@ -1,7 +1,23 @@
-import type { Instrument, Market } from './providers/types';
+import type { CryptoSource, Instrument, Market } from './providers/types';
 import { holdingFromEntry, type Holding } from './holdings';
 
 const MARKETS: readonly Market[] = ['cn', 'hk', 'us', 'crypto'];
+
+/** Crypto providers a pair can be pinned to with `crypto:<source>:<PAIR>`. */
+export const CRYPTO_SOURCES: readonly CryptoSource[] = ['binance', 'gate'];
+
+/**
+ * Quote assets a bare crypto pair can be split on. Order matters: `USDT`/`USDC` have to be
+ * tried before the single-token assets, or `BTCUSDT` would come out as base `BTCUS` quote `DT`.
+ */
+const QUOTE_ASSETS: readonly string[] = ['USDT', 'USDC', 'FDUSD', 'TUSD', 'BTC', 'ETH', 'BNB', 'EUR', 'TRY'];
+
+/**
+ * Crypto codes are whatever the exchange calls the pair. Gate really lists `牛来_USDT`, `KFC!3` and
+ * `SKM-CDY`, so only the characters that would break the `market:source:PAIR` shape or a URL path
+ * are rejected — an ASCII-only pattern silently failed the search command for those coins.
+ */
+const CRYPTO_CODE_PATTERN = /^[^\s:/\\]{2,24}$/;
 
 export class SymbolFormatError extends Error {
   constructor(message: string) {
@@ -14,6 +30,48 @@ function isMarket(value: string): value is Market {
   return (MARKETS as readonly string[]).includes(value);
 }
 
+function isCryptoSource(value: string): value is CryptoSource {
+  return (CRYPTO_SOURCES as readonly string[]).includes(value);
+}
+
+/**
+ * Splits a crypto pair into its base and quote asset: `BTCUSDT` and `LIT_USDT` both answer
+ * `{ base, quote }`. Returns `undefined` when the quote asset is not one this project knows,
+ * because guessing there would produce a request for a pair that does not exist.
+ */
+export function splitCryptoPair(code: string): { base: string; quote: string } | undefined {
+  const separator = code.indexOf('_');
+  if (separator > 0) {
+    const base = code.slice(0, separator);
+    const quote = code.slice(separator + 1);
+    return QUOTE_ASSETS.includes(quote) ? { base, quote } : undefined;
+  }
+  const quote = QUOTE_ASSETS.find((asset) => code.endsWith(asset));
+  if (!quote || quote.length >= code.length) {
+    return undefined;
+  }
+  return { base: code.slice(0, -quote.length), quote };
+}
+
+/**
+ * Drops the separator Gate writes between base and quote, so `crypto:gate:LIT_USDT` is spelled the
+ * same way as `crypto:BTCUSDT` everywhere the user sees it. A base that itself contains an
+ * underscore (`LITE_OLD_USDT`) or a quote asset this project does not know keeps its separator,
+ * because dropping it would name a different coin.
+ */
+export function compactCryptoPair(code: string): string {
+  const separator = code.lastIndexOf('_');
+  if (separator <= 0 || separator === code.length - 1) {
+    return code;
+  }
+  const base = code.slice(0, separator);
+  const quote = code.slice(separator + 1);
+  if (!QUOTE_ASSETS.includes(quote) || base.includes('_')) {
+    return code;
+  }
+  return `${base}${quote}`;
+}
+
 export function normalizeCode(market: Market, code: string): string {
   const trimmed = code.trim().replace(/\s+/g, '');
   if (market === 'cn') {
@@ -21,6 +79,27 @@ export function normalizeCode(market: Market, code: string): string {
   }
   // Hong Kong codes are quoted with five digits, so `hk:700` and `hk:00700` are one entry.
   return market === 'hk' ? (/^\d+$/.test(trimmed) ? trimmed.padStart(5, '0') : trimmed) : trimmed.toUpperCase();
+}
+
+/** `crypto:gate:LIT_USDT` carries its source; `crypto:BTCUSDT` leaves it to the failover order. */
+function parseCryptoCode(raw: string): { source?: CryptoSource; pair: string } {
+  const separator = raw.indexOf(':');
+  if (separator === -1) {
+    return { pair: normalizeCode('crypto', raw) };
+  }
+  const source = raw.slice(0, separator).trim().toLowerCase();
+  const pair = normalizeCode('crypto', raw.slice(separator + 1));
+  if (!isCryptoSource(source)) {
+    throw new SymbolFormatError(
+      `Unsupported crypto source "${raw.slice(0, separator).trim()}". Available sources: ${CRYPTO_SOURCES.join(', ')}.`,
+    );
+  }
+  if (pair.length === 0) {
+    throw new SymbolFormatError('Crypto pairs look like crypto:BTCUSDT or crypto:gate:LITUSDT.');
+  }
+  // Only a qualified pair is compacted: an unqualified code goes to Binance first, where
+  // `LIT_USDT` and `LITUSDT` are different instruments.
+  return { source, pair: compactCryptoPair(pair) };
 }
 
 function assertValidCode(market: Market, code: string): void {
@@ -41,8 +120,8 @@ function assertValidCode(market: Market, code: string): void {
       }
       return;
     case 'crypto':
-      if (!/^[A-Z0-9]{2,20}$/.test(code)) {
-        throw new SymbolFormatError('Crypto pairs look like crypto:BTCUSDT.');
+      if (!CRYPTO_CODE_PATTERN.test(code)) {
+        throw new SymbolFormatError('Crypto pairs look like crypto:BTCUSDT or crypto:gate:LITUSDT.');
       }
       return;
   }
@@ -57,6 +136,14 @@ export function parseInstrument(input: string): Instrument {
   const market = match[1].toLowerCase();
   if (!isMarket(market)) {
     throw new SymbolFormatError(`Unsupported market "${match[1]}". Available markets: cn, us, crypto.`);
+  }
+
+  if (market === 'crypto') {
+    const { source, pair } = parseCryptoCode(match[2]);
+    assertValidCode(market, pair);
+    return source
+      ? { id: `crypto:${source}:${pair}`, market, code: pair, source }
+      : { id: `crypto:${pair}`, market, code: pair };
   }
 
   const code = normalizeCode(market, match[2]);

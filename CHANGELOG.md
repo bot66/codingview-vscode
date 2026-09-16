@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.0
+
+- Crypto symbols can name their source: `crypto:gate:LITUSDT`, which is how two coins sharing a
+  ticker stay apart. Unqualified entries keep resolving through Binance as before.
+- Second crypto source: keyless Gate.io, tried after Binance Vision for unqualified pairs.
+- **CodingView: Search Crypto** finds a coin by name or ticker and shows its name, contract address
+  and live price before adding it as `crypto:gate:<PAIR>`.
+- Binance batch errors no longer drop every crypto quote: an unknown symbol is isolated by retrying
+  the batch one symbol at a time, so the rest keep pricing.
+- One version per change: `npm run version:bump` moves the manifest, the lockfile and the changelog
+  together, and `npm run check:version` fails CI when a change reuses a released version or leaves
+  the three files out of step.
+- Upgrading from 0.2.0 needs one manual step: uninstall the old `tgc.codingview` build first. Its
+  publisher id changed to `bot66`, so VS Code keeps both enabled, the duplicate command
+  registration aborts activation and the new commands look missing.
+- Crypto codes are no longer limited to ASCII, because Gate lists coins whose ticker is not:
+  `牛来_USDT`, `KFC!3`, `SKM-CDY`. Picking one of them used to fail with a symbol error after the
+  search had already found it.
+- Gate pairs are written the Binance way everywhere: `crypto:gate:LITUSDT` and `Lighter LITUSDT
+  4.2140`, not `LIT_USDT`. The old spelling still parses to the same entry, and a base code that
+  contains an underscore (`LITE_OLD_USDT`) keeps it.
+
 ## 0.2.0
 
 - Hong Kong listings (`hk:00700`) through the existing Tencent and Sina endpoints.

@@ -108,7 +108,7 @@ export class QuoteService {
     const pending = new Map(instruments.map((instrument) => [instrument.id, instrument]));
 
     for (const provider of this.candidates()) {
-      const batch = [...pending.values()].filter((instrument) => provider.supports(instrument.market));
+      const batch = [...pending.values()].filter((instrument) => this.handles(provider, instrument));
       if (batch.length === 0) {
         continue;
       }
@@ -142,6 +142,14 @@ export class QuoteService {
     }
     const selected = this.providers.filter((provider) => provider.id === this.providerMode);
     return selected.length > 0 ? selected : this.providers;
+  }
+
+  /**
+   * A provider that does not handle an instrument never sees it, and an empty batch is not a
+   * failure: `crypto:gate:LIT_USDT` alone in a watchlist must not trip the Binance circuit.
+   */
+  private handles(provider: QuoteProvider, instrument: Instrument): boolean {
+    return provider.handles ? provider.handles(instrument) : provider.supports(instrument.market);
   }
 
   private async fetchBatched(provider: QuoteProvider, instruments: Instrument[]): Promise<Quote[]> {

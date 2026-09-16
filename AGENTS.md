@@ -1,14 +1,14 @@
 # Repository Guidelines
 
 `codingview-vscode` is a VS Code extension showing live stock and crypto quotes in a status bar
-item, driven by `codingview.*` settings and keyless Tencent, Sina and Binance Vision endpoints.
+item, driven by `codingview.*` settings and keyless Tencent, Sina, Binance Vision and Gate.io endpoints.
 
 ## Project Structure & Module Organization
 
 - `src/extension.ts` — activation, command registration, status bar lifecycle.
 - `src/statusBar.ts`, `src/watchlist.ts` — the VS Code facing layer; the only modules importing `vscode`.
-- `src/symbols.ts`, `src/format.ts`, `src/quoteService.ts`, `src/holdings.ts`, `src/settings.ts` — pure logic: symbols, formatting, holdings and profit/loss, batching, timeouts, backoff, setting defaults.
-- `src/providers/` — one provider per source, behind the `QuoteProvider` interface in `types.ts`.
+- `src/symbols.ts`, `src/format.ts`, `src/quoteService.ts`, `src/holdings.ts`, `src/cryptoSearch.ts`, `src/settings.ts` — pure logic: symbols, formatting, holdings and profit/loss, batching, timeouts, backoff, crypto search ranking, setting defaults.
+- `src/providers/` — one provider per source, behind the `QuoteProvider` interface in `types.ts`; crypto has two keyless sources (Binance Vision, then Gate.io) and a symbol may pin one with `crypto:gate:<PAIR>`.
 - `src/test/` — Vitest specs and real fixtures under `fixtures/`.
 - `test/smoke/` — `@vscode/test-cli` specs that run in a real extension host (`npm run test:smoke`).
 - `scripts/generate-icon.mjs` regenerates `media/icon.png`; `scripts/generate-screenshots.mjs`
@@ -56,6 +56,10 @@ the issue, list manual verification steps, and attach a screenshot or GIF for UI
 - Add new sources behind `QuoteProvider`, keyless by default, backed by fixtures.
 - Run `npm run lint && npm test` (plus `npm run compile` for the VS Code layer) before reporting completion.
 - Run `npm run test:smoke` after touching `statusBar.ts`, `extension.ts`, `watchlist.ts` or the manifest.
+- Every change ships its own version: write the notes under `## Unreleased` in `CHANGELOG.md`, then
+  `npm run version:bump -- x.y.z` (MINOR for features and behaviour changes, PATCH for fixes, docs
+  and tooling). CI runs `npm run check:version` and fails on a reused version, a stale lockfile or a
+  missing section; `docs/release.md` holds the full rule.
 - Releases are GitHub Release assets cut from `v*` tags. Do not add Visual Studio Marketplace
   publishing steps (Azure DevOps organisation, PAT or Entra credentials): the project ships through
   GitHub Releases only, and `docs/decisions.md` records why.

@@ -4,6 +4,15 @@ The 0.1.0 limitations and every candidate follow-up that was on this page are no
 milestone is outstanding. This file keeps the record of what shipped, the ideas that are
 deliberately not planned, and the limitations that remain.
 
+## Shipped after 0.2.0
+
+| Milestone | What landed | Where |
+| --- | --- | --- |
+| Crypto identity | `crypto:gate:LITUSDT` style source-qualified pairs, `QuoteProvider.handles`, per-symbol retry after a Binance batch error | `src/symbols.ts`, `src/quoteService.ts`, `src/providers/{binanceVision,gate}.ts` |
+| Gate.io source | Keyless second crypto source with coin names, contract addresses and derived previous closes | `src/providers/gate.ts`, `src/test/fixtures/gate-*.json` |
+| Crypto search | **CodingView: Search Crypto** ranks Gate's catalogue by ticker or name and adds the picked pair | `src/cryptoSearch.ts`, `src/watchlist.ts` |
+| Documentation | A dedicated design page for the same-ticker problem and the alternatives that were rejected | `docs/crypto-identity.md` |
+
 ## Shipped in 0.2.0
 
 | Milestone | What landed | Where |
@@ -40,6 +49,11 @@ scratch.
 
 ## Known limitations
 
+- Binance Vision publishes no coin names, so an unqualified crypto quote is still labelled with its
+  base asset (`LIT LITUSDT`); only Gate quotes carry the real name. See
+  [crypto-identity.md](crypto-identity.md).
+- `api.gateio.ws` is not reachable from every network. `crypto:gate:` entries and the search command
+  depend on it; unqualified pairs keep working through Binance.
 - Prices come from unofficial endpoints without an SLA, so a field change shows up as missing data
   until the fixture and parser are updated.
 - The circuit breaker is per session: restarting the editor forgets which provider was failing.

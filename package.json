@@ -2,7 +2,7 @@
   "name": "codingview",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "bot66",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -40,6 +40,10 @@
       {
         "command": "codingview.addSymbol",
         "title": "%command.addSymbol%"
+      },
+      {
+        "command": "codingview.searchCrypto",
+        "title": "%command.searchCrypto%"
       },
       {
         "command": "codingview.removeSymbol",
@@ -148,7 +152,8 @@
             "finnhub",
             "tencent",
             "sina",
-            "binance-vision"
+            "binance-vision",
+            "gate"
           ],
           "default": "auto",
           "scope": "window",
@@ -166,6 +171,8 @@
     "test:smoke": "npm run compile && tsc -p tsconfig.smoke.json && vscode-test --config .vscode-test.mjs",
     "test:watch": "vitest",
     "verify:live": "node scripts/verify-live.mjs",
+    "check:version": "node scripts/check-version.mjs",
+    "version:bump": "node scripts/bump-version.mjs",
     "media": "node scripts/generate-screenshots.mjs",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --no-dependencies"

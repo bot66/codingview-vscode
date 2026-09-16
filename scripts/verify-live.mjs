@@ -2,7 +2,8 @@
 // endpoints for one sample symbol per market. Fixtures are copied from real payloads, so a
 // drift between fixture and endpoint shows up here before it ships.
 //
-//   npm run verify:live                 # cn:600519, hk:00700, us:AAPL, crypto:BTCUSDT
+//   npm run verify:live                 # cn:600519, hk:00700, us:AAPL, crypto:BTCUSDT,
+//                                       # crypto:gate:LITUSDT
 //   npm run verify:live -- cn:000001    # any watchlist entries
 //   npm run verify:live -- --provider=tencent --timeout=25
 //
@@ -42,7 +43,10 @@ const args = process.argv.slice(2);
 const providerMode = args.find((argument) => argument.startsWith('--provider='))?.slice('--provider='.length);
 const timeoutMs = Number(args.find((argument) => argument.startsWith('--timeout='))?.slice('--timeout='.length) ?? 8) * 1000;
 const entries = args.filter((argument) => !argument.startsWith('--'));
-const targets = entries.length > 0 ? entries : ['cn:600519', 'hk:00700', 'us:AAPL', 'crypto:BTCUSDT'];
+const targets =
+  entries.length > 0
+    ? entries
+    : ['cn:600519', 'hk:00700', 'us:AAPL', 'crypto:BTCUSDT', 'crypto:gate:LITUSDT'];
 const service = new QuoteService({
   providers: createDefaultProviders(),
   providerMode,

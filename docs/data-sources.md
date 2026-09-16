@@ -8,11 +8,13 @@
 | `tencent` | A-shares, Hong Kong, US | none | `https://qt.gtimg.cn/q=<symbols>` |
 | `sina` | A-shares, Hong Kong, US | none | `https://hq.sinajs.cn/list=<symbols>` |
 | `binance-vision` | crypto | none | `https://data-api.binance.vision/api/v3/ticker/24hr?symbols=[…]` |
+| `gate` | crypto | none | `https://api.gateio.ws/api/v4/spot/tickers?currency_pair=<PAIR>` |
 
 Finnhub leads for US symbols, but only once a key is stored; without one it reports that it does not
 support any market, so a fresh install stays keyless. Tencent is then preferred for stocks, Sina
 covers the same markets and is used when Tencent fails or resolves nothing for a symbol, and crypto
-never reaches the stock providers.
+never reaches the stock providers. Crypto has two sources: Binance Vision first, then Gate, which
+also serves the pairs a user pinned with `crypto:gate:<PAIR>`.
 
 ## Symbol translation
 
@@ -24,6 +26,7 @@ never reaches the stock providers.
 | `hk:00700` | `hk00700` | `rt_hk00700` |
 | `us:AAPL` | `usAAPL` | `gb_aapl` |
 | `crypto:BTCUSDT` | not supported | not supported |
+| `crypto:gate:LITUSDT` | not supported | not supported |
 
 Prefix rules for A-shares: `900xxx` → `sh` (Shanghai B-shares), `5`/`6` → `sh`, `9xxxxx` → `bj`,
 `43`/`83`/`87` → `bj`, `0`–`3` → `sz`, anything else (for example `700001`) is rejected. The
@@ -110,6 +113,41 @@ Crypto pairs have no display name, so the parser sets `name` to the base asset �
 `BTC`, `ETHBTC` becomes `ETH` — by stripping the quote asset suffix, and the status bar then reads
 `BTC BTCUSDT 78494.01 +1.73%` while the tooltip keeps `crypto:BTCUSDT` in its identifier column.
 
+A batch request fails as a whole when one symbol is unknown (`{"code":-1121,"msg":"Invalid symbol."}`,
+HTTP 400), so the provider retries the symbols one by one — at most five in flight — and keeps the
+ones that resolve. Transport failures are never retried that way. See
+[crypto-identity.md](crypto-identity.md) for why that matters to the Gate fallback.
+
+## Gate.io
+
+Gate covers the long tail of small listings, which is where two coins with the same ticker show up.
+It is keyless and takes one pair per request: `?currency_pair=LIT_USDT`. Comma- or JSON-batched
+pairs answer `{"label":"INVALID_CURRENCY_PAIR",…}` with HTTP 400.
+
+Fields used from `GET /api/v4/spot/tickers`:
+
+| Field | Use |
+| --- | --- |
+| `currency_pair` | Must equal the pair that was asked for, so a stray row cannot price another entry |
+| `last` | Price; rows without a positive price are dropped |
+| `change_percentage` | The change percent shown in the status bar |
+
+`prevClose` and `change` are derived from the percent (`last / (1 + percent / 100)`, then
+`last - prevClose`), rounded to four decimals like the Sina parser, because Gate publishes no
+previous close.
+
+`GET /api/v4/spot/currencies/<CODE>` adds the coin name and its contract (`LIT` → `Lighter`,
+`ETH 0x232ce3bd40fcd6f80f3d55a522d03f25df784ee2`). Names are cached per currency for the session and
+are best-effort: a failed lookup falls back to the base asset. An unknown currency or pair answers
+HTTP 400 (`INVALID_CURRENCY`), which the provider reads as "this instrument stays unresolved" — it
+never fails the whole batch for one bad pair.
+
+The **CodingView: Search Crypto** command pulls `GET /api/v4/spot/currencies` (≈2.1 MB) together with
+`GET /api/v4/spot/tickers` (≈542 KB) once per session, then ranks matches locally; that fetch is
+aborted after 15 s so a stalled connection cannot leave the progress notification spinning. Both `LITE3L_USDT`
+and `LITE_OLD_USDT` are real rows: the first proves that a placeholder chain (`invalid-LITE3L-…`) is
+not a contract, the second that a pair split has to take the last underscore.
+
 ## Finnhub
 
 US quotes only, and only when the user stored a key with **CodingView: Set API Key**. The key lives
@@ -146,7 +184,9 @@ keeps an unreachable `qt.gtimg.cn` from costing one request timeout every minute
 | Yahoo Finance | 429/403; now expects a crumb and cookie. Not adopted. |
 | Finnhub | Reached, 401 without a key. Free tier: register at finnhub.io and copy the key from the dashboard (60 requests/minute). |
 | CryptoCompare | Reached, 401 without a key; a free key is available. |
-| CoinGecko, OKX, Coinbase, Kraken, Eastmoney | Unreachable from the development sandbox, so not adopted. |
+| CoinGecko | Best name search and no key for a handful of calls, but unreachable from the development sandbox, so no real fixture could back a parser. |
+| DexScreener, OKX, Coinbase, Kraken, Bybit, KuCoin, Bitget, MEXC, HTX, Eastmoney | Unreachable from the development sandbox, so not adopted. |
+| Gate.io | Reachable, keyless, and carries coin names and contract addresses; adopted as the second crypto source. |
 | Stooq CSV | Reachable, but the documented URL answered 404 on the tested path. |
 
 ## Adding a source
