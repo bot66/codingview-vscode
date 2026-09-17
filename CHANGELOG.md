@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Default refresh interval changed from 60 seconds to 30 seconds for more responsive quote updates.
+
 ## 0.3.1
 
 - Documentation, agent notes, CI workflows, scripts and tests no longer cut a release: a version is

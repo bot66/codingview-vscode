@@ -3,7 +3,7 @@
  * imports so the clamping rules can be unit tested under plain Node.
  */
 export const SETTINGS_DEFAULTS = {
-  refreshIntervalSeconds: 60,
+  refreshIntervalSeconds: 30,
   rotateIntervalSeconds: 5,
   requestTimeoutSeconds: 8,
 } as const;

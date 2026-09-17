@@ -113,7 +113,7 @@
         },
         "codingview.refreshIntervalSeconds": {
           "type": "number",
-          "default": 60,
+          "default": 30,
           "minimum": 15,
           "scope": "window",
           "description": "%config.refreshIntervalSeconds%"
