@@ -41,8 +41,8 @@ developer can follow their portfolio without leaving the editor.
 | Empty watchlist shows a clickable "Add a symbol" item | Verified in the extension host: `npm run test:smoke` asserts the placeholder text |
 | Adding `cn:600519` shows a price within seconds | Verified live: `npm run verify:live` resolves one symbol per market from the real endpoints |
 | Rotation advances every 5s and honours the setting | Implemented; exercised by the smoke test with `rotateIntervalSeconds: 2`, still worth an F5 pass for feel |
-| Failed refresh keeps the last price and shows `$(warning)` | Verified live: the Tencent timeout fell through to Sina and the status bar screenshot shows the prices |
+| Failed refresh keeps the last price and shows `$(warning)` only on the affected symbol | Verified by unit tests over mixed outcomes and an extension-host assertion that an unserved symbol alone is marked |
 | Halted instruments are distinguishable from unknown codes | Verified by unit tests over the synthetic halted row and the unknown-code stub |
 | `npm run lint && npm test` pass | Verified: ESLint clean, all Vitest specs green |
-| `npm run test:smoke` passes | Verified: 7 assertions in a real VS Code 1.138 extension host |
+| `npm run test:smoke` passes | Verified: 8 assertions in a real VS Code 1.138 extension host |
 | `npm run package` produces an installable `.vsix` | Verified: 11 entries including the bundle and the new media |

@@ -43,7 +43,8 @@ plain Node.
    nothing at all counts as a failure too — unless `handles` left it without any instrument, which
    is not a failure but a provider that simply has nothing to do this cycle.
 5. Arriving quotes merge into the controller's map; instruments that stay pending become `missing`
-   and render as `--`.
+   and are the only ones marked stale for the cycle. A stale instrument keeps its previous price
+   behind `$(warning)`, or renders `--` when it was never priced.
 6. `ProviderHealth` counts consecutive failures per provider and, after the second one, skips that
    provider for three cycles (`PROVIDER_FAILURE_THRESHOLD`, `PROVIDER_COOLDOWN_CYCLES`). Any success
    clears the counter. Skipped ids come back in `RefreshOutcome.skipped` and are logged, so an
@@ -63,17 +64,19 @@ plain Node.
   the empty state keeps its single actionable item.
 - Text: `$(graph) 贵州茅台 600519 1277.96 +0.22%` — `Quote.name` in front of the configured code, so
   the item stays readable while the code still identifies the listing. Before the first quote there
-  is no name, and the item reads `$(graph) 600519 --`; a cycle that was not clean prefixes
-  `$(warning)`. Binance Vision publishes no coin names, so its crypto quotes use the base asset
+  is no name, and the item reads `$(graph) 600519 --`. Only the symbols the last cycle could not
+  resolve prefix `$(warning)`; one priced through a fallback provider stays `$(graph)`. Binance
+  Vision publishes no coin names, so its crypto quotes use the base asset
   (`BTC BTCUSDT 78494.01 +1.73%`), while a Gate pair carries the real name
-  (`Lighter LITUSDT 4.2140 -0.40%`). A suspended instrument renders as `$(graph) 贵州茅台 600519 -- 停牌` from
-  `Quote.halted`, so it is not confused with an unknown code. An empty watchlist shows a clickable
-  `$(graph) Add a symbol`.
+  (`Lighter LITUSDT 4.2140 -0.40%`). A suspended instrument renders as `$(graph) 贵州茅台 600519 -- 停牌`
+  from `Quote.halted`, so it is not confused with an unknown code. An empty watchlist shows a
+  clickable `$(graph) Add a symbol`.
 - Colour: `ThemeColor('charts.green')` when the change is positive, `charts.red` when negative,
   no colour when flat or when `colorByDirection` is false.
 - Tooltip: markdown table of every symbol with price, change percent and name (the code again when a
-  quote has no name), the newest provider timestamp, and — when relevant — a stale marker, the last
-  error, a delayed-quote note and the invalid entries with a command link to remove them.
+  quote has no name), the newest provider timestamp, and — when relevant — a `$(warning)` marker on
+  the price of the stale rows, a line explaining that they show the previous prices or have no data,
+  the last error, a delayed-quote note and the invalid entries with a command link to remove them.
 - Rotation runs on `setInterval`. The item's command is `codingview.showList`, or
   `codingview.addSymbol` while the watchlist is empty.
 

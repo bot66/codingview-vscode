@@ -23,8 +23,8 @@ refresh button on the right fetches new prices immediately.*
   quotes if you want a second opinion on that market.
 - **Profit and loss** for the entries where you record a quantity and average cost.
 - **One-click refresh** from the button immediately to the right of the price display.
-- **Stale-aware**: keep the last price behind a `$(warning)` marker, with failover between sources
-  and backoff on repeated failures.
+- **Stale-aware**: only the symbols whose refresh failed keep the last price behind a `$(warning)`
+  marker, with failover between sources and backoff on repeated failures.
 
 ## Install
 

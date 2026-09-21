@@ -12,7 +12,14 @@ import {
 } from './format';
 import { profitLoss, type Holding } from './holdings';
 import type { Instrument, Quote, QuoteProvider } from './providers/types';
-import { backoffSeconds, ProviderHealth, QuoteService } from './quoteService';
+import {
+  advanceRefreshState,
+  backoffSeconds,
+  failedRefreshState,
+  ProviderHealth,
+  QuoteService,
+  type RefreshState,
+} from './quoteService';
 import { clampedSeconds, SETTINGS_DEFAULTS, SETTINGS_MINIMUMS, type SecondsSetting } from './settings';
 import { parseWatchlist, type InvalidEntry } from './symbols';
 
@@ -31,9 +38,7 @@ export class StatusBarController implements vscode.Disposable {
   private holdings = new Map<string, Holding>();
   private invalid: InvalidEntry[] = [];
   private index = 0;
-  private stale = false;
-  private lastError?: string;
-  private failures = 0;
+  private refreshState: RefreshState = { staleIds: new Set(), failures: 0 };
   private refreshing = false;
   private refreshTimer?: ReturnType<typeof setTimeout>;
   private rotateTimer?: ReturnType<typeof setInterval>;
@@ -167,7 +172,9 @@ export class StatusBarController implements vscode.Disposable {
     this.clearTimers();
     this.rotateTimer = setInterval(() => this.next(), this.readSeconds('rotateIntervalSeconds') * 1000);
     this.render();
-    this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : 0);
+    this.scheduleRefresh(
+      this.refreshState.failures > 0 ? backoffSeconds(this.refreshState.failures) * 1000 : 0,
+    );
   }
 
   private scheduleRefresh(delayMs: number): void {
@@ -206,15 +213,7 @@ export class StatusBarController implements vscode.Disposable {
         this.quotes.set(quote.id, quote);
       }
 
-      if (outcome.providerErrors.length > 0 || outcome.missing.length > 0) {
-        this.failures += 1;
-        this.stale = true;
-        this.lastError = outcome.providerErrors[0];
-      } else {
-        this.failures = 0;
-        this.stale = false;
-        this.lastError = undefined;
-      }
+      this.refreshState = advanceRefreshState(this.refreshState, outcome);
 
       if (outcome.providerErrors.length > 0) {
         this.output.appendLine(`Refresh failed: ${outcome.providerErrors.join('; ')}`);
@@ -226,17 +225,22 @@ export class StatusBarController implements vscode.Disposable {
         this.output.appendLine(`No data for: ${outcome.missing.join(', ')}`);
       }
     } catch (error) {
-      this.failures += 1;
-      this.stale = true;
-      this.lastError = error instanceof Error ? error.message : String(error);
-      this.output.appendLine(`Unexpected refresh error: ${this.lastError}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.refreshState = failedRefreshState(
+        this.refreshState,
+        targets.map((target) => target.id),
+        message,
+      );
+      this.output.appendLine(`Unexpected refresh error: ${message}`);
     } finally {
       this.refreshing = false;
       this.updateRefreshItem();
     }
 
     this.render();
-    this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : refreshMs);
+    this.scheduleRefresh(
+      this.refreshState.failures > 0 ? backoffSeconds(this.refreshState.failures) * 1000 : refreshMs,
+    );
   }
 
   /**
@@ -291,7 +295,7 @@ export class StatusBarController implements vscode.Disposable {
     item.text = statusBarText({
       instrument,
       quote,
-      stale: this.stale,
+      stale: this.refreshState.staleIds.has(instrument.id),
       profit: holding && quote ? this.profitText(quote, holding, false) : undefined,
       labels: { halted: vscode.l10n.t('Halted') },
     });
@@ -318,6 +322,7 @@ export class StatusBarController implements vscode.Disposable {
         name: quote?.name ?? (quote ? instrument.code : ''),
         price: quotePrice(quote),
         change: quote?.halted ? vscode.l10n.t('Halted') : formatChangePercent(quote?.changePercent),
+        stale: this.refreshState.staleIds.has(instrument.id),
         profit: quote ? this.profitText(quote, this.holdings.get(instrument.id), true) : undefined,
       };
     });
@@ -330,21 +335,46 @@ export class StatusBarController implements vscode.Disposable {
     const markdown = tooltipMarkdown({
       rows,
       updatedAt,
-      stale: this.stale,
-      error: this.lastError,
+      warnings: this.staleWarnings(),
+      error: this.refreshState.lastError,
       invalid: this.invalidRows(),
       notes: this.tooltipNotes(),
       labels: {
         updated: (time) => vscode.l10n.t('Updated {0}', time),
-        stale: vscode.l10n.t('Quotes are stale'),
         lastError: (message) => vscode.l10n.t('Last error: {0}', message),
         invalidTitle: vscode.l10n.t('Ignored entries'),
         remove: vscode.l10n.t('Remove'),
       },
     });
     const tooltip = new vscode.MarkdownString(markdown);
+    tooltip.supportThemeIcons = true;
     tooltip.isTrusted = { enabledCommands: [REMOVE_ENTRY_COMMAND] };
     return tooltip;
+  }
+
+  /**
+   * Explains the per-symbol stale markers: a stale instrument with a cached quote still shows its
+   * previous price, while one without has never been priced.
+   */
+  private staleWarnings(): string[] {
+    const stale = this.refreshTargets().filter((instrument) =>
+      this.refreshState.staleIds.has(instrument.id),
+    );
+    const cached = stale.filter((instrument) => this.quotes.has(instrument.id));
+    const missing = stale.filter((instrument) => !this.quotes.has(instrument.id));
+    const warnings: string[] = [];
+    if (cached.length > 0) {
+      warnings.push(vscode.l10n.t('Last update failed; showing the previous prices.'));
+    }
+    if (missing.length > 0) {
+      warnings.push(
+        vscode.l10n.t(
+          'These symbols have no data: {0}',
+          missing.map((instrument) => instrument.id).join(', '),
+        ),
+      );
+    }
+    return warnings;
   }
 
   private invalidRows(): InvalidTooltipRow[] {

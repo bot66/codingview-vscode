@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ProviderHealth, QuoteService, backoffSeconds } from '../quoteService';
+import {
+  ProviderHealth,
+  QuoteService,
+  advanceRefreshState,
+  backoffSeconds,
+  failedRefreshState,
+  type RefreshState,
+} from '../quoteService';
 import type { Instrument, Market, Quote, QuoteProvider } from '../providers/types';
 import { parseInstrument } from '../symbols';
 
@@ -41,6 +48,66 @@ describe('backoffSeconds', () => {
     expect(backoffSeconds(3)).toBe(240);
     expect(backoffSeconds(4)).toBe(300);
     expect(backoffSeconds(9)).toBe(300);
+  });
+});
+
+describe('refresh state', () => {
+  const clean: RefreshState = { staleIds: new Set(), failures: 0 };
+
+  test('marks only the symbols the cycle could not resolve', () => {
+    const state = advanceRefreshState(clean, {
+      quotes: [quoteFor(instrument('cn:600519', 'cn', '600519'), 1277.96, 'tencent')],
+      missing: ['us:AAPL'],
+      providerErrors: [],
+      skipped: [],
+    });
+
+    expect([...state.staleIds]).toEqual(['us:AAPL']);
+    expect(state.failures).toBe(1);
+    expect(state.lastError).toBeUndefined();
+  });
+
+  test('keeps a symbol fresh when a fallback provider resolved it', () => {
+    const state = advanceRefreshState(clean, {
+      quotes: [quoteFor(instrument('cn:600519', 'cn', '600519'), 1276.5, 'sina')],
+      missing: [],
+      providerErrors: ['tencent: socket hang up'],
+      skipped: [],
+    });
+
+    expect([...state.staleIds]).toEqual([]);
+    expect(state.failures).toBe(1);
+    expect(state.lastError).toBe('tencent: socket hang up');
+  });
+
+  test('clears the stale symbols, the failure count and the error after a clean cycle', () => {
+    const state = advanceRefreshState(
+      { staleIds: new Set(['us:AAPL']), failures: 2, lastError: 'HTTP 500' },
+      { quotes: [], missing: [], providerErrors: [], skipped: [] },
+    );
+
+    expect([...state.staleIds]).toEqual([]);
+    expect(state.failures).toBe(0);
+    expect(state.lastError).toBeUndefined();
+  });
+
+  test('keeps the last error when a cycle only has unresolved symbols', () => {
+    const state = advanceRefreshState(
+      { staleIds: new Set(), failures: 1, lastError: 'HTTP 500' },
+      { quotes: [], missing: ['us:AAPL'], providerErrors: [], skipped: [] },
+    );
+
+    expect([...state.staleIds]).toEqual(['us:AAPL']);
+    expect(state.failures).toBe(2);
+    expect(state.lastError).toBe('HTTP 500');
+  });
+
+  test('marks every target stale when the refresh throws', () => {
+    const state = failedRefreshState(clean, ['cn:600519', 'us:AAPL'], 'boom');
+
+    expect([...state.staleIds]).toEqual(['cn:600519', 'us:AAPL']);
+    expect(state.failures).toBe(1);
+    expect(state.lastError).toBe('boom');
   });
 });
 

@@ -131,7 +131,6 @@ describe('tooltipMarkdown', () => {
         { id: 'cn:000001', name: '', price: '--', change: '--' },
       ],
       updatedAt: '2026-09-14 16:14:50',
-      stale: false,
     });
 
     expect(markdown).toContain('| cn:600519 | 1277.96 | +0.22% | 贵州茅台 |');
@@ -139,22 +138,33 @@ describe('tooltipMarkdown', () => {
     expect(markdown).toContain('Last updated 2026-09-14 16:14:50');
   });
 
-  test('reports stale data and the last error', () => {
+  test('marks only the stale row', () => {
     const markdown = tooltipMarkdown({
-      rows: [{ id: 'cn:600519', name: '', price: '1277.96', change: '+0.22%' }],
-      stale: true,
-      staleMessage: 'Quotes are stale',
+      rows: [
+        { id: 'cn:600519', name: '', price: '1277.96', change: '+0.22%' },
+        { id: 'us:AAPL', name: '', price: '333.40', change: '+0.34%', stale: true },
+      ],
+    });
+
+    expect(markdown).toContain('| cn:600519 | 1277.96 | +0.22% |');
+    expect(markdown).toContain('| us:AAPL | $(warning) 333.40 | +0.34% |');
+  });
+
+  test('reports the stale explanations and the last error', () => {
+    const markdown = tooltipMarkdown({
+      rows: [{ id: 'us:AAPL', name: '', price: '333.40', change: '+0.34%', stale: true }],
+      warnings: ['Last update failed; showing the previous prices.', 'These symbols have no data: jp:7203'],
       error: 'HTTP 500',
     });
 
-    expect(markdown).toContain('Quotes are stale');
+    expect(markdown).toContain('$(warning) Last update failed; showing the previous prices.');
+    expect(markdown).toContain('$(warning) These symbols have no data: jp:7203');
     expect(markdown).toContain('HTTP 500');
   });
 
   test('lists ignored entries with a link that removes them', () => {
     const markdown = tooltipMarkdown({
       rows: [],
-      stale: false,
       invalid: [
         {
           entry: 'jp:7203',
@@ -173,7 +183,6 @@ describe('tooltipMarkdown', () => {
   test('translates the invalid-entry section', () => {
     const markdown = tooltipMarkdown({
       rows: [],
-      stale: false,
       invalid: [{ entry: 'jp:7203', reason: 'unsupported', removeLink: 'command:x' }],
       labels: { invalidTitle: '被忽略的标的', remove: '移除' },
     });
@@ -183,7 +192,7 @@ describe('tooltipMarkdown', () => {
   });
 
   test('omits the invalid-entry section when every entry parses', () => {
-    const markdown = tooltipMarkdown({ rows: [], stale: false });
+    const markdown = tooltipMarkdown({ rows: [] });
 
     expect(markdown).not.toContain('Ignored entries');
   });
@@ -194,7 +203,6 @@ describe('tooltipMarkdown', () => {
         { id: 'cn:600519', name: '贵州茅台', price: '1277.96', change: '+0.22%', profit: '+¥280.00' },
         { id: 'us:AAPL', name: '', price: '333.40', change: '+0.34%' },
       ],
-      stale: false,
     });
 
     expect(markdown).toContain('| Symbol | Price | Change | P/L | Name |');
@@ -205,7 +213,6 @@ describe('tooltipMarkdown', () => {
   test('keeps the four column table when nothing is held', () => {
     const markdown = tooltipMarkdown({
       rows: [{ id: 'cn:600519', name: '', price: '1277.96', change: '+0.22%' }],
-      stale: false,
     });
 
     expect(markdown).toContain('| Symbol | Price | Change | Name |');
@@ -215,7 +222,6 @@ describe('tooltipMarkdown', () => {
   test('adds notes such as the delay disclosure', () => {
     const markdown = tooltipMarkdown({
       rows: [{ id: 'us:AAPL', name: '', price: '333.40', change: '+0.34%' }],
-      stale: false,
       notes: ['US quotes may be delayed by the source.'],
     });
 

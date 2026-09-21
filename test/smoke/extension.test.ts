@@ -106,6 +106,18 @@ suite('CodingView in the extension host', () => {
     );
   });
 
+  test('marks a symbol no provider could refresh as stale', async () => {
+    await setSetting('watchlist', ['cn:600519']);
+
+    await waitFor(
+      (snapshot) => snapshot.text === '$(warning) 600519 --',
+      'the stale marker for the symbol the crypto-only provider cannot serve',
+    );
+    const snapshot = await snapshotOf();
+
+    assert.match(snapshot.tooltip, /These symbols have no data: cn:600519/);
+  });
+
   test('lists an ignored entry in the tooltip with a command link to remove it', async () => {
     await setSetting('watchlist', ['nope']);
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- A partially failed refresh no longer marks every symbol stale. Only the symbols no provider could
+  refresh keep the `$(warning)` marker, a symbol priced through a fallback source stays normal, and
+  the tooltip names the stale rows and whether they show a previous price or no data at all.
+
 ## 0.4.0
 
 - A green refresh button now sits immediately to the right of the status bar prices. Click it to

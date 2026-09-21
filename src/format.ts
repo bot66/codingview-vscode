@@ -92,6 +92,8 @@ export interface TooltipRow {
   name: string;
   price: string;
   change: string;
+  /** The last refresh could not resolve this row, so the price is the previous one. */
+  stale?: boolean;
   /** Preformatted profit for a held symbol; the P/L column appears when any row has one. */
   profit?: string;
 }
@@ -106,7 +108,6 @@ export interface InvalidTooltipRow {
 
 export interface TooltipLabels {
   updated: (time: string) => string;
-  stale: string;
   lastError: (message: string) => string;
   invalidTitle: string;
   remove: string;
@@ -115,8 +116,8 @@ export interface TooltipLabels {
 export interface TooltipArgs {
   rows: readonly TooltipRow[];
   updatedAt?: string;
-  stale: boolean;
-  staleMessage?: string;
+  /** Lines for instruments whose last refresh failed, rendered with a warning icon. */
+  warnings?: readonly string[];
   error?: string;
   invalid?: readonly InvalidTooltipRow[];
   /** Extra lines, for example the delayed-quote disclosure. */
@@ -125,9 +126,8 @@ export interface TooltipArgs {
 }
 
 export function tooltipMarkdown(args: TooltipArgs): string {
-  const { rows, updatedAt, stale, staleMessage, error, invalid, notes, labels } = args;
+  const { rows, updatedAt, warnings, error, invalid, notes, labels } = args;
   const updated = labels?.updated ?? ((time: string) => `Last updated ${time}`);
-  const staleText = labels?.stale ?? 'Quotes are stale';
   const lastError = labels?.lastError ?? ((message: string) => `Last error: ${message}`);
   const invalidTitle = labels?.invalidTitle ?? 'Ignored entries';
   const remove = labels?.remove ?? 'Remove';
@@ -137,7 +137,7 @@ export function tooltipMarkdown(args: TooltipArgs): string {
     ? ['### CodingView', '', '| Symbol | Price | Change | P/L | Name |', '| --- | --- | --- | --- | --- |']
     : ['### CodingView', '', '| Symbol | Price | Change | Name |', '| --- | --- | --- | --- |'];
   for (const row of rows) {
-    const cells = [row.id, row.price, row.change];
+    const cells = [row.id, row.stale ? `$(warning) ${row.price}` : row.price, row.change];
     if (withProfit) {
       cells.push(row.profit ?? '--');
     }
@@ -158,8 +158,8 @@ export function tooltipMarkdown(args: TooltipArgs): string {
   for (const note of notes ?? []) {
     lines.push('', `$(info) ${note}`);
   }
-  if (stale) {
-    lines.push('', `$(warning) ${staleMessage ?? staleText}`);
+  for (const warning of warnings ?? []) {
+    lines.push('', `$(warning) ${warning}`);
   }
   if (error) {
     lines.push('', lastError(error));

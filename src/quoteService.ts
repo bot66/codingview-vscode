@@ -79,6 +79,44 @@ export interface RefreshOutcome {
   skipped: string[];
 }
 
+/** Controller state that survives across refresh cycles. */
+export interface RefreshState {
+  /** Instruments the last cycle could not refresh, so their displayed price is stale. */
+  staleIds: ReadonlySet<string>;
+  /** Consecutive cycles with provider errors or unresolved instruments. */
+  failures: number;
+  /** First provider error of the most recent cycle that had one. */
+  lastError?: string;
+}
+
+/**
+ * Advances the cycle state. A symbol a fallback provider resolved is fresh, so only the
+ * instruments no provider could resolve stay stale.
+ */
+export function advanceRefreshState(previous: RefreshState, outcome: RefreshOutcome): RefreshState {
+  const failed = outcome.providerErrors.length > 0 || outcome.missing.length > 0;
+  let lastError = previous.lastError;
+  if (outcome.providerErrors.length > 0) {
+    lastError = outcome.providerErrors[0];
+  } else if (!failed) {
+    lastError = undefined;
+  }
+  return {
+    staleIds: new Set(outcome.missing),
+    failures: failed ? previous.failures + 1 : 0,
+    lastError,
+  };
+}
+
+/** A thrown cycle resolved nothing, so every target keeps its previous price. */
+export function failedRefreshState(
+  previous: RefreshState,
+  ids: Iterable<string>,
+  message: string,
+): RefreshState {
+  return { staleIds: new Set(ids), failures: previous.failures + 1, lastError: message };
+}
+
 export interface QuoteServiceOptions {
   providers: QuoteProvider[];
   timeoutMs?: number;

@@ -65,9 +65,11 @@ refresh button, and the controller registers a `codingview.test.snapshot` comman
 2. every command listed in `contributes.commands` is registered,
 3. an empty watchlist renders `$(graph) Add a symbol`,
 4. adding `cn:600519` switches the item to that symbol without a network round trip,
-5. an invalid entry appears in the tooltip behind a `command:codingview.removeSymbolEntry` link,
-6. a pinned symbol leaves the rotation and renders in its own item,
-7. a populated watchlist adds an idle refresh button whose tooltip reads `Refresh quotes`.
+5. a symbol the pinned crypto-only provider cannot serve is marked `$(warning)` and named under
+   "These symbols have no data",
+6. an invalid entry appears in the tooltip behind a `command:codingview.removeSymbolEntry` link,
+7. a pinned symbol leaves the rotation and renders in its own item,
+8. a populated watchlist adds an idle refresh button whose tooltip reads `Refresh quotes`.
 
 It is the only gate that needs a graphical session, so CI runs it under `xvfb-run`. Colours, rotation
 feel and the command flows still deserve the manual pass below.
