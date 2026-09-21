@@ -85,9 +85,14 @@ suite('CodingView in the extension host', () => {
   });
 
   test('shows a manual refresh button beside the quote item', async () => {
+    await setSetting('watchlist', ['cn:600519']);
+
+    await waitFor(
+      (snapshot) => snapshot.refreshText === '$(refresh)' && snapshot.text.includes('600519'),
+      'the idle refresh button',
+    );
     const snapshot = await snapshotOf();
 
-    assert.equal(snapshot.refreshText, '$(refresh)');
     assert.equal(snapshot.refreshTooltip, 'Refresh quotes');
     await vscode.commands.executeCommand('codingview.refreshNow');
   });

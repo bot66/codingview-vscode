@@ -4,7 +4,7 @@
 
 - A green refresh button now sits immediately to the right of the status bar prices. Click it to
   fetch fresh quotes without opening the Command Palette; the icon spins while the request is
-  active.
+  active, and the button stays hidden while the watchlist is empty.
 
 ## 0.3.1
 

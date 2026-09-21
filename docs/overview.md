@@ -13,6 +13,7 @@ developer can follow their portfolio without leaving the editor.
 - One left-aligned status bar item rotating through the watchlist every 5 seconds.
 - Watchlist stored in `codingview.watchlist`, managed by commands and editable by hand.
 - An optional pinned item next to the rotation for one symbol that should never scroll away.
+- A refresh button beside the prices, hidden while the watchlist has nothing to fetch.
 - Optional `quantity` and `cost` per entry, giving profit and loss in the status bar and tooltip.
 - Markets: mainland China A-shares, Hong Kong stocks, US stocks and crypto spot pairs.
 - Keyless quote sources: Tencent (preferred), Sina (fallback), Binance Vision and Gate.io for crypto, plus an optional
@@ -43,5 +44,5 @@ developer can follow their portfolio without leaving the editor.
 | Failed refresh keeps the last price and shows `$(warning)` | Verified live: the Tencent timeout fell through to Sina and the status bar screenshot shows the prices |
 | Halted instruments are distinguishable from unknown codes | Verified by unit tests over the synthetic halted row and the unknown-code stub |
 | `npm run lint && npm test` pass | Verified: ESLint clean, all Vitest specs green |
-| `npm run test:smoke` passes | Verified: 6 assertions in a real VS Code 1.137 extension host |
+| `npm run test:smoke` passes | Verified: 7 assertions in a real VS Code 1.138 extension host |
 | `npm run package` produces an installable `.vsix` | Verified: 11 entries including the bundle and the new media |

@@ -57,16 +57,17 @@ failing the run.
 
 `npm run test:smoke` compiles `test/smoke/**` with `tsconfig.smoke.json` and then runs
 `@vscode/test-cli` against a downloaded VS Code build. VS Code exposes no API to read a status bar
-item, so `StatusBarController.snapshot()` reports the text, the tooltip and the pinned text, and the
-controller registers a `codingview.test.snapshot` command **only** in `ExtensionMode.Test`. The
-suite asserts:
+item, so `StatusBarController.snapshot()` reports the text, the tooltip, the pinned text and the
+refresh button, and the controller registers a `codingview.test.snapshot` command **only** in
+`ExtensionMode.Test`. The suite asserts:
 
 1. the extension activates,
 2. every command listed in `contributes.commands` is registered,
 3. an empty watchlist renders `$(graph) Add a symbol`,
 4. adding `cn:600519` switches the item to that symbol without a network round trip,
 5. an invalid entry appears in the tooltip behind a `command:codingview.removeSymbolEntry` link,
-6. a pinned symbol leaves the rotation and renders in its own item.
+6. a pinned symbol leaves the rotation and renders in its own item,
+7. a populated watchlist adds an idle refresh button whose tooltip reads `Refresh quotes`.
 
 It is the only gate that needs a graphical session, so CI runs it under `xvfb-run`. Colours, rotation
 feel and the command flows still deserve the manual pass below.
@@ -87,6 +88,8 @@ deterministic (the item shows the code, not a provider name). Live rendering is 
 7. Run **CodingView: Remove Symbol** → the entry disappears from the status bar and from settings.
 8. Run **CodingView: Set Holding** → the status bar shows the profit and the tooltip gains a P/L
    column.
+9. Click the refresh button → the icon spins while the request runs, and an empty watchlist shows
+   no button at all.
 
 ## Pitfalls
 

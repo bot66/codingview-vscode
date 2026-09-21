@@ -91,11 +91,14 @@ async function evaluate(send, expression) {
 const ITEMS_EXPRESSION = `JSON.stringify([...document.querySelectorAll('.statusbar-item')]
   .filter((element) => {
     const label = element.getAttribute('aria-label') ?? '';
-    return label.includes('### CodingView') || label.includes('Refresh quotes');
+    // The price items carry the tooltip's "### CodingView" heading; the refresh button has no such
+    // heading, so it needs its own match — which has to survive the "Refreshing quotes…" tooltip it
+    // shows while a request is running.
+    return label.includes('### CodingView') || /Refresh(ing)? quotes/.test(label);
   })
   .map((element) => ({ text: element.textContent, rect: element.getBoundingClientRect().toJSON() })))`;
 
-/** The strip that holds both CodingView items, with a little padding on either side. */
+/** The strip that holds the CodingView items, with a little padding on either side. */
 async function codingviewClip(send, scale) {
   const items = JSON.parse(await evaluate(send, ITEMS_EXPRESSION));
   if (items.length === 0) {

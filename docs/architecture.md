@@ -59,7 +59,8 @@ plain Node.
   pinned symbol is fetched even when it is not in the watchlist and is removed from the rotation
   list, so it is never shown twice. A third item at priority 99 places a clickable `charts.green`
   refresh icon immediately to the right of the prices; it runs `codingview.refreshNow` and spins
-  while the request is active.
+  while the request is active. The button stays hidden while the watchlist has nothing to fetch, so
+  the empty state keeps its single actionable item.
 - Text: `$(graph) 贵州茅台 600519 1277.96 +0.22%` — `Quote.name` in front of the configured code, so
   the item stays readable while the code still identifies the listing. Before the first quote there
   is no name, and the item reads `$(graph) 600519 --`; a cycle that was not clean prefixes

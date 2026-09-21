@@ -65,7 +65,6 @@ export class StatusBarController implements vscode.Disposable {
       }),
     );
     this.item.show();
-    this.refreshItem.show();
     this.reload();
   }
 
@@ -240,11 +239,20 @@ export class StatusBarController implements vscode.Disposable {
     this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : refreshMs);
   }
 
+  /**
+   * Keeps the button in step with the refresh state, and out of the empty state: with nothing to
+   * fetch the click is a silent no-op, so the placeholder stays the only actionable item.
+   */
   private updateRefreshItem(): void {
     this.refreshItem.text = this.refreshing ? '$(sync~spin)' : '$(refresh)';
     this.refreshItem.tooltip = this.refreshing
       ? vscode.l10n.t('Refreshing quotes…')
       : vscode.l10n.t('Refresh quotes');
+    if (this.refreshTargets().length === 0) {
+      this.refreshItem.hide();
+    } else {
+      this.refreshItem.show();
+    }
   }
 
   private render(): void {
@@ -260,6 +268,8 @@ export class StatusBarController implements vscode.Disposable {
       this.item.command = 'codingview.showList';
       this.decorate(this.item, instrument);
     }
+
+    this.updateRefreshItem();
 
     if (!this.pinnedInstrument) {
       this.pinnedItem.hide();
