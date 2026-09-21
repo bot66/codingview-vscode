@@ -89,7 +89,10 @@ async function evaluate(send, expression) {
 }
 
 const ITEMS_EXPRESSION = `JSON.stringify([...document.querySelectorAll('.statusbar-item')]
-  .filter((element) => (element.getAttribute('aria-label') ?? '').includes('### CodingView'))
+  .filter((element) => {
+    const label = element.getAttribute('aria-label') ?? '';
+    return label.includes('### CodingView') || label.includes('Refresh quotes');
+  })
   .map((element) => ({ text: element.textContent, rect: element.getBoundingClientRect().toJSON() })))`;
 
 /** The strip that holds both CodingView items, with a little padding on either side. */
