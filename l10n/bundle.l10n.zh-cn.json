@@ -39,6 +39,8 @@
   "Last error: {0}": "最近错误：{0}",
   "Updated {0}": "更新于 {0}",
   "Click to manage the watchlist": "点击管理关注列表",
+  "Refresh quotes": "刷新行情",
+  "Refreshing quotes…": "正在刷新行情…",
   "Add a symbol": "添加标的",
   "CodingView watchlist": "CodingView 关注列表",
   "Last update failed; showing the previous prices.": "上次更新失败，显示的是之前的价格。",

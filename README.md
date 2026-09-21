@@ -9,7 +9,8 @@ without leaving the editor.
 ![Two CodingView items in the status bar: a pinned Hong Kong quote and the rotating A-share with its profit](media/statusbar.png)
 
 *Captured from a development build: `hk:00700` is pinned, `cn:600519` rotates in with its profit and
-loss because the entry carries a quantity and a cost. Each item reads `name code price change`.*
+loss because the entry carries a quantity and a cost. Each item reads `name code price change`; the
+refresh button on the right fetches new prices immediately.*
 
 ![The rotating item switching between two symbols](media/rotation.gif)
 
@@ -21,6 +22,7 @@ loss because the entry carries a quantity and a cost. Each item reads `name code
 - **Keyless by default** (Tencent, Sina, Binance Vision and Gate.io). Add a free Finnhub key for US
   quotes if you want a second opinion on that market.
 - **Profit and loss** for the entries where you record a quantity and average cost.
+- **One-click refresh** from the button immediately to the right of the price display.
 - **Stale-aware**: keep the last price behind a `$(warning)` marker, with failover between sources
   and backoff on repeated failures.
 

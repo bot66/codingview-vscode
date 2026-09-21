@@ -22,6 +22,7 @@ const REMOVE_ENTRY_COMMAND = 'codingview.removeSymbolEntry';
 export class StatusBarController implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
   private readonly pinnedItem: vscode.StatusBarItem;
+  private readonly refreshItem: vscode.StatusBarItem;
   private readonly disposables: vscode.Disposable[] = [];
   private readonly quotes = new Map<string, Quote>();
   private readonly health = new ProviderHealth();
@@ -47,6 +48,10 @@ export class StatusBarController implements vscode.Disposable {
     this.pinnedItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 101);
     this.pinnedItem.name = 'CodingView pinned';
     this.pinnedItem.command = 'codingview.showList';
+    this.refreshItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
+    this.refreshItem.name = 'CodingView refresh';
+    this.refreshItem.command = 'codingview.refreshNow';
+    this.updateRefreshItem();
   }
 
   start(): void {
@@ -59,6 +64,7 @@ export class StatusBarController implements vscode.Disposable {
       }),
     );
     this.item.show();
+    this.refreshItem.show();
     this.reload();
   }
 
@@ -66,6 +72,7 @@ export class StatusBarController implements vscode.Disposable {
     this.clearTimers();
     this.item.dispose();
     this.pinnedItem.dispose();
+    this.refreshItem.dispose();
     for (const disposable of this.disposables) {
       disposable.dispose();
     }
@@ -97,12 +104,16 @@ export class StatusBarController implements vscode.Disposable {
    * Current rendering, used by the extension-host smoke test: VS Code gives no API to read a
    * status bar item, so the controller reports what it wrote.
    */
-  snapshot(): { text: string; tooltip: string; pinnedText?: string } {
+  snapshot(): { text: string; tooltip: string; pinnedText?: string; refreshText: string; refreshTooltip: string } {
     const tooltip = this.item.tooltip;
+    const refreshTooltip = this.refreshItem.tooltip;
     return {
       text: this.item.text ?? '',
       tooltip: typeof tooltip === 'string' ? tooltip : (tooltip?.value ?? ''),
       pinnedText: this.pinnedInstrument ? this.pinnedItem.text : undefined,
+      refreshText: this.refreshItem.text,
+      refreshTooltip:
+        typeof refreshTooltip === 'string' ? refreshTooltip : (refreshTooltip?.value ?? ''),
     };
   }
 
@@ -181,6 +192,7 @@ export class StatusBarController implements vscode.Disposable {
     }
 
     this.refreshing = true;
+    this.updateRefreshItem();
     try {
       const service = new QuoteService({
         providers: this.providers,
@@ -220,10 +232,18 @@ export class StatusBarController implements vscode.Disposable {
       this.output.appendLine(`Unexpected refresh error: ${this.lastError}`);
     } finally {
       this.refreshing = false;
+      this.updateRefreshItem();
     }
 
     this.render();
     this.scheduleRefresh(this.failures > 0 ? backoffSeconds(this.failures) * 1000 : refreshMs);
+  }
+
+  private updateRefreshItem(): void {
+    this.refreshItem.text = this.refreshing ? '$(sync~spin)' : '$(refresh)';
+    this.refreshItem.tooltip = this.refreshing
+      ? vscode.l10n.t('Refreshing quotes…')
+      : vscode.l10n.t('Refresh quotes');
   }
 
   private render(): void {

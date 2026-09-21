@@ -6,6 +6,8 @@ interface Snapshot {
   text: string;
   tooltip: string;
   pinnedText?: string;
+  refreshText: string;
+  refreshTooltip: string;
 }
 
 const SETTINGS = 'codingview';
@@ -80,6 +82,14 @@ suite('CodingView in the extension host', () => {
     await setSetting('watchlist', []);
 
     await waitFor((snapshot) => snapshot.text.includes('Add a symbol'), 'the placeholder');
+  });
+
+  test('shows a manual refresh button beside the quote item', async () => {
+    const snapshot = await snapshotOf();
+
+    assert.equal(snapshot.refreshText, '$(refresh)');
+    assert.equal(snapshot.refreshTooltip, 'Refresh quotes');
+    await vscode.commands.executeCommand('codingview.refreshNow');
   });
 
   test('switches to the first symbol once the watchlist has one', async () => {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- A refresh button now sits immediately to the right of the status bar prices. Click it to fetch
+  fresh quotes without opening the Command Palette; the icon spins while the request is active.
+
 ## 0.3.1
 
 - Documentation, agent notes, CI workflows, scripts and tests no longer cut a release: a version is
