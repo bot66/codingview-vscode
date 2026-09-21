@@ -57,9 +57,9 @@ plain Node.
 - One left-aligned rotating item (`StatusBarAlignment.Left`, priority 100, name `CodingView`) plus,
   when `codingview.pinnedSymbol` parses, a second item at priority 101 that never rotates. The
   pinned symbol is fetched even when it is not in the watchlist and is removed from the rotation
-  list, so it is never shown twice. A third item at priority 99 places a clickable refresh icon
-  immediately to the right of the prices; it runs `codingview.refreshNow` and spins while the
-  request is active.
+  list, so it is never shown twice. A third item at priority 99 places a clickable `charts.green`
+  refresh icon immediately to the right of the prices; it runs `codingview.refreshNow` and spins
+  while the request is active.
 - Text: `$(graph) 贵州茅台 600519 1277.96 +0.22%` — `Quote.name` in front of the configured code, so
   the item stays readable while the code still identifies the listing. Before the first quote there
   is no name, and the item reads `$(graph) 600519 --`; a cycle that was not clean prefixes

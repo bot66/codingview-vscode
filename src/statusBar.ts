@@ -51,6 +51,7 @@ export class StatusBarController implements vscode.Disposable {
     this.refreshItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
     this.refreshItem.name = 'CodingView refresh';
     this.refreshItem.command = 'codingview.refreshNow';
+    this.refreshItem.color = new vscode.ThemeColor('charts.green');
     this.updateRefreshItem();
   }
 

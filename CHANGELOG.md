@@ -2,8 +2,9 @@
 
 ## 0.4.0
 
-- A refresh button now sits immediately to the right of the status bar prices. Click it to fetch
-  fresh quotes without opening the Command Palette; the icon spins while the request is active.
+- A green refresh button now sits immediately to the right of the status bar prices. Click it to
+  fetch fresh quotes without opening the Command Palette; the icon spins while the request is
+  active.
 
 ## 0.3.1
 
